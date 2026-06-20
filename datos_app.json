@@ -169,6 +169,39 @@
       "matches": 0,
       "reportes": 0,
       "estado": "Activo"
+    },
+    "pollaspapa@gmail.com": {
+      "nombre": "pollos papa",
+      "password": "1234",
+      "rol": "usuario",
+      "genero": "Masculino",
+      "profesion": "",
+      "confianza": 5.0,
+      "matches": 0,
+      "reportes": 0,
+      "estado": "Activo"
+    },
+    "oscarabasto@gmail.com": {
+      "nombre": "oscar abasto",
+      "password": "1234",
+      "rol": "usuario",
+      "genero": "Masculino",
+      "profesion": "",
+      "confianza": 5.0,
+      "matches": 0,
+      "reportes": 0,
+      "estado": "Activo"
+    },
+    "karlodante15@gmail.com": {
+      "nombre": "karlo dante",
+      "password": "1008",
+      "rol": "usuario",
+      "genero": "Masculino",
+      "profesion": "",
+      "confianza": 5.0,
+      "matches": 0,
+      "reportes": 0,
+      "estado": "Activo"
     }
   }
 }

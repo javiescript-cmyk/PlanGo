@@ -38,6 +38,8 @@ class AplicacionPrincipal(tk.Tk):
 
     def cargar_autenticacion(self):
         self.title("Two Pack - Plataforma de Smart Economy para Cochabamba")
+        # Volver al tamaño de ventana original para login
+        self.geometry("420x820")
         # Le pasamos la función que debe ejecutar cuando el login sea exitoso
         self.cambiar_vista(VistaAutenticacion, al_ingresar_exitoso=self.al_autenticar_usuario)
 
@@ -47,7 +49,9 @@ class AplicacionPrincipal(tk.Tk):
         # Dependiendo del rol, cargar la pantalla correspondiente
         if datos_usuario.get("rol") == "comercio":
             self.title("Two Pack - Panel de Comercio Local")
-            self.cambiar_vista(PanelComercio, al_cerrar_sesion=self.cargar_autenticacion)
+            # Ajustar tamaño de ventana para panel de comercio
+            self.geometry("1000x600")
+            self.cambiar_vista(PanelComercio, usuario_actual=self.usuario_logueado, al_cerrar_sesion=self.cargar_autenticacion)
         else:
             self.title("Two Pack - Dashboard de Usuario")
             # Cambiamos al Dashboard pasándole los datos capturados del usuario

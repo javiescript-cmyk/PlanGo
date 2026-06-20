@@ -1,16 +1,13 @@
 
+
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 from config import (
     COLOR_BG, COLOR_CARD, COLOR_TEXT_MAIN, COLOR_TEXT_MUTED, COLOR_SUCCESS, COLOR_SUCCESS_HOVER,
-<<<<<<< Updated upstream
-    COLOR_ACCENT_RED, COLOR_RED_HOVER, COLOR_RED_ACTIVE, COLOR_RAYO_YELLOW,
-    get_db_connection, configurar_animacion_boton
-=======
-    COLOR_CORAL_FUEGO, COLOR_AZUL_ELECTRICO, COLOR_AMARILLO_ORO,
-    cargar_datos, guardar_datos, configurar_animacion_boton, base_datos_global
->>>>>>> Stashed changes
+    COLOR_CORAL_FUEGO, COLOR_AZUL_ELECTRICO, COLOR_AMARILLO_ORO, COLOR_ACCENT_RED,
+    COLOR_RED_HOVER, COLOR_RED_ACTIVE, cargar_datos, guardar_datos, configurar_animacion_boton,
+    base_datos_global
 )
 
 class PanelComercio(tk.Frame):
@@ -19,6 +16,7 @@ class PanelComercio(tk.Frame):
         self.parent = parent
         self.usuario_actual = usuario_actual
         self.al_cerrar_sesion = al_cerrar_sesion
+        self.datos = cargar_datos()
         
         self.configurar_estilos_tabla()
         self.inicializar_interfaz()
@@ -62,11 +60,6 @@ class PanelComercio(tk.Frame):
         self.ent_titulo.pack(fill="x", ipady=5, pady=(0, 10))
 
         tk.Label(frame_izq, text="CATEGORÍA", font=("Helvetica", 8, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(5, 2))
-<<<<<<< Updated upstream
-        self.cb_categoria = ttk.Combobox(frame_izq, values=[], state="readonly")
-        self.cb_categoria.pack(fill="x", ipady=3, pady=(0, 10))
-        self.cargar_categorias()
-=======
         self.cb_categoria = ttk.Combobox(frame_izq, values=["Gastronomía", "Pubs / Discotecas", "Cafeterías", "Entretenimiento", "Eventos", "Deportes / Bienestar", "Tiendas Locales"], state="readonly")
         self.cb_categoria.pack(fill="x", ipady=3, pady=(0, 10))
         self.cb_categoria.set("Gastronomía")
@@ -84,20 +77,10 @@ class PanelComercio(tk.Frame):
         tk.Label(frame_izq, text="PRECIO UNITARIO REFERENCIAL (Bs.)", font=("Helvetica", 8, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(5, 2))
         self.ent_precio = tk.Entry(frame_izq, font=("Helvetica", 10), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN, bd=0, highlightthickness=1, highlightbackground="#2D2D2D")
         self.ent_precio.pack(fill="x", ipady=5, pady=(0, 10))
->>>>>>> Stashed changes
 
         tk.Label(frame_izq, text="DESCRIPCIÓN DEL 2x1", font=("Helvetica", 8, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(5, 2))
         self.txt_desc = tk.Text(frame_izq, font=("Helvetica", 10), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN, bd=0, height=4, highlightthickness=1, highlightbackground="#2D2D2D")
         self.txt_desc.pack(fill="x", pady=(0, 10))
-
-        tk.Label(frame_izq, text="FECHA INICIO (DD/MM/AAAA)", font=("Helvetica", 8, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(5, 2))
-        self.ent_fecha_inicio = tk.Entry(frame_izq, font=("Helvetica", 10), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN, bd=0, highlightthickness=1, highlightbackground="#2D2D2D")
-        self.ent_fecha_inicio.pack(fill="x", ipady=5, pady=(0, 10))
-        self.ent_fecha_inicio.insert(0, datetime.now().strftime("%d/%m/%Y"))
-
-        tk.Label(frame_izq, text="FECHA FIN (DD/MM/AAAA)", font=("Helvetica", 8, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(5, 2))
-        self.ent_fecha_fin = tk.Entry(frame_izq, font=("Helvetica", 10), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN, bd=0, highlightthickness=1, highlightbackground="#2D2D2D")
-        self.ent_fecha_fin.pack(fill="x", ipady=5, pady=(0, 15))
 
         btn_lanzar = tk.Button(frame_izq, text="🚀 Lanzar Promo 2x1", font=("Helvetica", 11, "bold"), bg=COLOR_CORAL_FUEGO, fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", command=self.registrar_oferta)
         btn_lanzar.pack(fill="x", ipady=8)
@@ -105,26 +88,26 @@ class PanelComercio(tk.Frame):
 
         tk.Label(frame_der, text="MIS PROMOCIONES ACTIVAS", font=("Helvetica", 10, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MAIN).pack(anchor="w", pady=(0, 15))
 
-        columnas = ("id", "titulo", "categoria", "descripcion", "estado")
+        columnas = ("id", "titulo", "cat", "zona", "vence", "precio_ref", "descripcion", "demanda")
         self.tabla = ttk.Treeview(frame_der, columns=columnas, show="headings")
 
         self.tabla.heading("id", text="ID")
-        self.tabla.heading("titulo", text="Título de la Promo")
-        self.tabla.heading("categoria", text="Categoría")
+        self.tabla.heading("titulo", text="Título")
+        self.tabla.heading("cat", text="Categoría")
+        self.tabla.heading("zona", text="Zona")
+        self.tabla.heading("vence", text="Vence")
+        self.tabla.heading("precio_ref", text="Precio")
         self.tabla.heading("descripcion", text="Descripción")
-        self.tabla.heading("estado", text="Estado")
+        self.tabla.heading("demanda", text="Demanda")
 
         self.tabla.column("id", width=40, anchor="center")
-        self.tabla.column("titulo", width=200, anchor="w")
-        self.tabla.column("categoria", width=100, anchor="center")
-<<<<<<< Updated upstream
-        self.tabla.column("descripcion", width=250, anchor="w")
-        self.tabla.column("estado", width=80, anchor="center")
-=======
+        self.tabla.column("titulo", width=150, anchor="w")
+        self.tabla.column("cat", width=100, anchor="center")
         self.tabla.column("zona", width=120, anchor="center")
         self.tabla.column("vence", width=80, anchor="center")
         self.tabla.column("precio_ref", width=70, anchor="center")
->>>>>>> Stashed changes
+        self.tabla.column("descripcion", width=200, anchor="w")
+        self.tabla.column("demanda", width=100, anchor="center")
 
         self.tabla.pack(fill="both", expand=True, pady=(0, 10))
 
@@ -144,27 +127,6 @@ class PanelComercio(tk.Frame):
         frame_stats_com = tk.Frame(frame_der, bg=COLOR_BG)
         frame_stats_com.pack(fill="x")
 
-<<<<<<< Updated upstream
-        # Stats will be loaded from DB
-        self.lbl_promos_activas = tk.Label(frame_stats_com, text="🎯 0 Promos activas", font=("Helvetica", 12, "bold"), bg=COLOR_RAYO_YELLOW)
-        self.lbl_promos_activas.pack()
-
-    def cargar_categorias(self):
-        conn = get_db_connection()
-        if not conn:
-            return
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT nombre FROM categorias ORDER BY nombre")
-            categorias = cursor.fetchall()
-            self.cb_categoria['values'] = [cat['nombre'] for cat in categorias]
-            if categorias:
-                self.cb_categoria.current(0)
-        except Exception as e:
-            print(f"Error cargando categorías: {e}")
-        finally:
-            conn.close()
-=======
         stats_negocio = [
             ("🎯", str(len(base_datos_global["promociones"])),
              "Promos activas"),
@@ -189,38 +151,22 @@ class PanelComercio(tk.Frame):
                      font=("Helvetica", 8),
                      bg=COLOR_CARD,
                      fg=COLOR_TEXT_MUTED).pack()
->>>>>>> Stashed changes
 
     def actualizar_tabla(self):
         for fila in self.tabla.get_children():
             self.tabla.delete(fila)
         
-        conn = get_db_connection()
-        if not conn:
-            return
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT p.id, p.titulo, c.nombre as categoria, p.descripcion, p.estado
-                FROM promociones p
-                JOIN categorias c ON p.categoria_id = c.id
-                WHERE p.negocio_id = %s
-                ORDER BY p.fecha_creacion DESC
-            """, (self.usuario_actual['id'],))
-            promos = cursor.fetchall()
-            
-            for promo in promos:
-                self.tabla.insert("", "end", values=(
-                    promo['id'],
-                    promo['titulo'],
-                    promo['categoria'],
-                    promo['descripcion'],
-                    promo['estado']
-                ))
-        except Exception as e:
-            print(f"Error actualizando tabla: {e}")
-        finally:
-            conn.close()
+        for promo in base_datos_global["promociones"]:
+            self.tabla.insert("", "end", values=(
+                promo["id"],
+                promo["titulo"],
+                promo["cat"],
+                promo["zona"],
+                promo["vence"],
+                promo["precio_ref"],
+                promo["descripcion"][:50] + "...",
+                promo.get("demanda", "Media")
+            ))
 
     def _mostrar_dialogo_alerta(self, titulo, mensaje):
         ventana = tk.Toplevel(self)
@@ -260,67 +206,18 @@ class PanelComercio(tk.Frame):
 
     def registrar_oferta(self):
         titulo = self.ent_titulo.get().strip()
-        categoria_nombre = self.cb_categoria.get()
+        categoria = self.cb_categoria.get()
+        zona = self.cb_zona.get()
+        vence = self.ent_vence.get().strip()
+        precio_ref = self.ent_precio.get().strip()
         descripcion = self.txt_desc.get("1.0", tk.END).strip()
-        fecha_inicio_str = self.ent_fecha_inicio.get().strip()
-        fecha_fin_str = self.ent_fecha_fin.get().strip()
 
-<<<<<<< Updated upstream
-        if not titulo or not categoria_nombre or not descripcion or not fecha_inicio_str or not fecha_fin_str:
-            messagebox.showwarning("Campos Incompletos", "Por favor completa todos los campos para lanzar la promoción.")
-=======
         if not titulo or not vence or not descripcion:
             self._mostrar_dialogo_alerta("Campos Incompletos", "Por favor completa todos los campos para lanzar la promoción.")
->>>>>>> Stashed changes
             return
 
-        try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, "%d/%m/%Y")
-            fecha_fin = datetime.strptime(fecha_fin_str, "%d/%m/%Y")
-        except ValueError:
-<<<<<<< Updated upstream
-            messagebox.showerror("Error de Formato", "Las fechas deben tener el formato DD/MM/AAAA")
-=======
-            self._mostrar_dialogo_alerta("Error de Formato", "La fecha de caducidad debe tener el formato DD/MM/AAAA\nEjemplo: 30/06/2026")
->>>>>>> Stashed changes
-            return
+        nuevo_id = str(len(base_datos_global["promociones"]) + 1).zfill(3)
 
-        conn = get_db_connection()
-        if not conn:
-            messagebox.showerror("Error", "No se pudo conectar a la base de datos.")
-            return
-
-<<<<<<< Updated upstream
-        try:
-            cursor = conn.cursor()
-            
-            # Obtener ID de la categoría
-            cursor.execute("SELECT id FROM categorias WHERE nombre = %s", (categoria_nombre,))
-            categoria = cursor.fetchone()
-            if not categoria:
-                messagebox.showerror("Error", "Categoría no encontrada.")
-                return
-            
-            # Insertar promoción
-            cursor.execute("""
-                INSERT INTO promociones (negocio_id, categoria_id, titulo, descripcion, fecha_inicio, fecha_fin, estado)
-                VALUES (%s, %s, %s, %s, %s, %s, 'activa')
-            """, (self.usuario_actual['id'], categoria['id'], titulo, descripcion, fecha_inicio, fecha_fin))
-            conn.commit()
-            
-            messagebox.showinfo("¡Éxito Total!", f"Tu oferta '{titulo}' ha sido publicada correctamente.")
-            self.actualizar_tabla()
-            
-            # Limpiar campos
-            self.ent_titulo.delete(0, tk.END)
-            self.txt_desc.delete("1.0", tk.END)
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Ocurrió un error: {e}")
-            conn.rollback()
-        finally:
-            conn.close()
-=======
         self.datos["promociones"].append({
             "id": nuevo_id, 
             "titulo": titulo, 
@@ -328,18 +225,21 @@ class PanelComercio(tk.Frame):
             "zona": zona, 
             "vence": vence,
             "precio_ref": precio_ref,
-            "descripcion": descripcion
+            "descripcion": descripcion,
+            "demanda": "Alta",
+            "comercio": self.usuario_actual.get("nombre", "Mi Negocio"),
+            "distancia": "500 m",
+            "hora_hasta": "22:00"
         })
         
         guardar_datos()
 
         self.actualizar_tabla()
-        self._mostrar_dialogo_exito("¡Éxito Total!", f"Tu oferta '{titulo}' ha sido desplegada con éxito en la zona {zona}.")
+        self._mostrar_dialogo_exito("¡Éxito Total!", f"Tu oferta '{titulo}' ha sido publicada correctamente.")
 
         self.ent_titulo.delete(0, tk.END)
         self.ent_precio.delete(0, tk.END)
         self.txt_desc.delete("1.0", tk.END)
->>>>>>> Stashed changes
 
     def eliminar_oferta(self):
         item_seleccionado = self.tabla.selection()
@@ -350,42 +250,26 @@ class PanelComercio(tk.Frame):
         valores = self.tabla.item(item_seleccionado, "values")
         id_promo = valores[0]
         
-<<<<<<< Updated upstream
-        conn = get_db_connection()
-        if not conn:
-            messagebox.showerror("Error", "No se pudo conectar a la base de datos.")
-            return
-=======
+        # Eliminar de base_datos_global
+        base_datos_global["promociones"] = [
+            p for p in base_datos_global["promociones"] 
+            if p["id"] != id_promo
+        ]
+        
         guardar_datos()
 
         self.actualizar_tabla()
         self._mostrar_dialogo_exito("Promo Eliminada", "La oferta seleccionada fue removida del feed de Two Pack de forma inmediata.")
->>>>>>> Stashed changes
-
-        try:
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM promociones WHERE id = %s", (id_promo,))
-            conn.commit()
-            
-            messagebox.showinfo("Promo Eliminada", "La oferta seleccionada fue removida del feed de Two Pack de forma inmediata.")
-            self.actualizar_tabla()
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Ocurrió un error: {e}")
-            conn.rollback()
-        finally:
-            conn.close()
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Two Pack - Test Comercio Local")
-    root.geometry("900x600")
+    root.geometry("1000x600")
     root.configure(bg=COLOR_BG)
 
     # Dummy usuario para pruebas
-    usuario_test = {'id': '1', 'nombre': 'Negocio Test', 'rol': 'comercio'}
+    usuario_test = {"nombre": "Restaurante Sabores", "rol": "comercio"}
     panel = PanelComercio(root, usuario_test, al_cerrar_sesion=lambda: root.destroy())
     panel.pack(fill="both", expand=True)
 
     root.mainloop()
-
