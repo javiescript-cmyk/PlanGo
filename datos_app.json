@@ -158,6 +158,17 @@
       "matches": 0,
       "reportes": 0,
       "estado": "Activo"
+    },
+    "xydarkodayx@gmail.com": {
+      "nombre": "karlo dante",
+      "password": "adankarlo1008xd",
+      "rol": "usuario",
+      "genero": "Otro",
+      "profesion": "",
+      "confianza": 5.0,
+      "matches": 0,
+      "reportes": 0,
+      "estado": "Activo"
     }
   }
 }
