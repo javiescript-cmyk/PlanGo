@@ -1,0 +1,163 @@
+{
+  "promociones": [
+    {
+      "id": "001",
+      "titulo": "2x1 en Alitas BBQ Universitarias",
+      "cat": "Gastronomía",
+      "zona": "Zona UCATEC",
+      "vence": "30/06/2026",
+      "precio_ref": "45",
+      "descripcion": "Disfruta dos porciones de alitas BBQ por el precio de una. Válido lunes a miércoles de 12:00 a 15:00. Presenta la app Two Pack al pagar."
+    },
+    {
+      "id": "002",
+      "titulo": "Fernet con Cola 2x1 — Jueves de Frater",
+      "cat": "Pubs / Discotecas",
+      "zona": "La Recoleta",
+      "vence": "31/07/2026",
+      "precio_ref": "55",
+      "descripcion": "Cada jueves de frater, lleva dos Fernet con Cola y paga solo uno. Válido de 20:00 a 23:00 hrs. Solo para universitarios con carnet."
+    },
+    {
+      "id": "003",
+      "titulo": "Milkshake Premium 2x1",
+      "cat": "Cafeterías",
+      "zona": "El Prado",
+      "vence": "15/07/2026",
+      "precio_ref": "38",
+      "descripcion": "Elige dos milkshakes de cualquier sabor de nuestra carta premium y paga solo el más caro. Válido toda la semana de 14:00 a 19:00 hrs."
+    },
+    {
+      "id": "004",
+      "titulo": "Combo Burger Doble Smash 2x1",
+      "cat": "Gastronomía",
+      "zona": "Av. América",
+      "vence": "30/06/2026",
+      "precio_ref": "65",
+      "descripcion": "Dos combos completos (burger + papas + refresco) por el precio de uno. Válido martes y miércoles al mediodía."
+    },
+    {
+      "id": "005",
+      "titulo": "Entrada Doble — Cine Prime Tarde",
+      "cat": "Entretenimiento",
+      "zona": "Centro Comercial Las Vegas",
+      "vence": "31/07/2026",
+      "precio_ref": "30",
+      "descripcion": "Compra una entrada y lleva a un acompañante gratis en tandas de tarde (antes de 18:00). Cualquier película en cartelera."
+    },
+    {
+      "id": "006",
+      "titulo": "Clase de CrossFit 2x1",
+      "cat": "Deportes / Bienestar",
+      "zona": "Zona Norte",
+      "vence": "15/07/2026",
+      "precio_ref": "40",
+      "descripcion": "Trae a un amigo y los dos entrenan por el precio de una clase. Incluye acceso a vestuarios y casilleros. Lunes, miércoles y viernes."
+    },
+    {
+      "id": "007",
+      "titulo": "2x1 en Pizzas Medianas",
+      "cat": "Gastronomía",
+      "zona": "Zona Central",
+      "vence": "30/06/2026",
+      "precio_ref": "58",
+      "descripcion": "Pide dos pizzas medianas de cualquier sabor y paga solo una. Válido domingos de 18:00 a 21:00. No incluye delivery."
+    },
+    {
+      "id": "008",
+      "titulo": "Tour Gastronómico Cbba 2x1",
+      "cat": "Eventos / Conciertos",
+      "zona": "Cancha y Mercado",
+      "vence": "31/07/2026",
+      "precio_ref": "80",
+      "descripcion": "Recorre 5 puntos gastronómicos emblemáticos de Cochabamba con guía incluido. Dos personas por el precio de una. Sábados 10:00 a 13:00."
+    }
+  ],
+  "historial_matches": [
+    {
+      "id": "m001",
+      "usuario_match": "Alejandro Gómez",
+      "genero_match": "Masculino",
+      "promo": "2x1 en Alitas Universitarias",
+      "zona": "Zona UCATEC",
+      "fecha": "15/06/2026",
+      "hora": "13:00",
+      "reseña_dada": null,
+      "puntuacion_dada": null
+    },
+    {
+      "id": "m002",
+      "usuario_match": "Sofía Claros",
+      "genero_match": "Femenino",
+      "promo": "Fernet 2x1 Jueves de Frater",
+      "zona": "La Recoleta",
+      "fecha": "10/06/2026",
+      "hora": "20:00",
+      "reseña_dada": "Muy puntual y simpática",
+      "puntuacion_dada": 5
+    }
+  ],
+  "pool_solicitudes": [
+    {
+      "usuario": "Alejandro Gómez",
+      "genero": "Masculino",
+      "oferta_id": "001",
+      "hora_inicio": 12,
+      "hora_fin": 14,
+      "filtro_genero": false
+    },
+    {
+      "usuario": "Sofía Claros",
+      "genero": "Femenino",
+      "oferta_id": "002",
+      "hora_inicio": 12,
+      "hora_fin": 14,
+      "filtro_genero": false
+    },
+    {
+      "usuario": "Diego Torrico",
+      "genero": "Masculino",
+      "oferta_id": "001",
+      "hora_inicio": 18,
+      "hora_fin": 20,
+      "filtro_genero": false
+    },
+    {
+      "usuario": "Valeria Rocha",
+      "genero": "Femenino",
+      "oferta_id": "001",
+      "hora_inicio": 12,
+      "hora_fin": 14,
+      "filtro_genero": true
+    }
+  ],
+  "usuarios": {
+    "estudiante@universidad.edu.bo": {
+      "nombre": "Carlos Mendoza",
+      "password": "123",
+      "rol": "estudiante",
+      "genero": "Masculino",
+      "universidad": "UCATEC",
+      "confianza": 5.0,
+      "matches": 0,
+      "reportes": 0,
+      "estado": "Activo"
+    },
+    "comercio@local.com": {
+      "nombre": "Restaurante Burger Click",
+      "password": "123",
+      "rol": "comercio"
+    },
+    "xydarkdayx@ucatec.edu.bo": {
+      "nombre": "karlo dante",
+      "password": "1008",
+      "rol": "estudiante",
+      "genero": "Masculino",
+      "universidad": "",
+      "confianza": 5.0,
+      "matches": 0,
+      "reportes": 0,
+      "estado": "Activo"
+    }
+  }
+}

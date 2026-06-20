@@ -1,0 +1,103 @@
+{
+  "promociones": [
+    {
+      "id": "001",
+      "titulo": "2x1 en Alitas Universitarias",
+      "cat": "Gastronomía",
+      "zona": "Zona UCATEC",
+      "vence": "25/06/2026",
+      "precio_ref": "35"
+    },
+    {
+      "id": "002",
+      "titulo": "Fernet 2x1 Jueves de Frater",
+      "cat": "Pubs / Discotecas",
+      "zona": "La Recoleta",
+      "vence": "28/06/2026",
+      "precio_ref": "50"
+    },
+    {
+      "id": "003",
+      "titulo": "2x1 Milkshakes Premium",
+      "cat": "Cafeterías",
+      "zona": "El Prado",
+      "vence": "30/06/2026",
+      "precio_ref": "22"
+    },
+    {
+      "id": "004",
+      "titulo": "2x1 en salchipapa",
+      "cat": "Gastronomía",
+      "zona": "Zona Central",
+      "vence": "25/06/2026",
+      "precio_ref": "50"
+    }
+  ],
+  "pool_solicitudes": [
+    {
+      "usuario": "Alejandro Gómez",
+      "genero": "Masculino",
+      "oferta_id": "001",
+      "hora_inicio": 12,
+      "hora_fin": 14,
+      "filtro_genero": false
+    },
+    {
+      "usuario": "Sofía Claros",
+      "genero": "Femenino",
+      "oferta_id": "002",
+      "hora_inicio": 12,
+      "hora_fin": 14,
+      "filtro_genero": false
+    },
+    {
+      "usuario": "Diego Torrico",
+      "genero": "Masculino",
+      "oferta_id": "001",
+      "hora_inicio": 18,
+      "hora_fin": 20,
+      "filtro_genero": false
+    },
+    {
+      "usuario": "Valeria Rocha",
+      "genero": "Femenino",
+      "oferta_id": "001",
+      "hora_inicio": 12,
+      "hora_fin": 14,
+      "filtro_genero": true
+    }
+  ],
+  "usuarios": {
+    "estudiante@universidad.edu.bo": {
+      "nombre": "Carlos Mendoza",
+      "password": "123",
+      "rol": "estudiante",
+      "genero": "Masculino"
+    },
+    "comercio@local.com": {
+      "nombre": "Restaurante Burger Click",
+      "password": "123",
+      "rol": "comercio"
+    },
+    "xydarkodayx@ucatec.edu.bo": {
+      "nombre": "karlo dante pacheco valencia",
+      "password": "1008",
+      "rol": "estudiante",
+      "genero": "Masculino",
+      "confianza": 5.0,
+      "matches": 0,
+      "reportes": 0,
+      "estado": "Activo"
+    },
+    "oscarmusic@ucatec.edu.bo": {
+      "nombre": "oscar abasto",
+      "password": "oscar1234",
+      "rol": "estudiante",
+      "genero": "Masculino",
+      "confianza": 5.0,
+      "matches": 0,
+      "reportes": 0,
+      "estado": "Activo"
+    }
+  }
+}
