@@ -3,6 +3,11 @@ import json
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import random
+from datetime import datetime
+
+# Ruta base del proyecto
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # --- PALETA DE COLORES OFICIAL ACTUALIZADA ---
 COLOR_BG = "#121212"
@@ -44,7 +49,8 @@ base_datos_global = {
             "distancia": "400 m",
             "hora_hasta": "22:00",
             "demanda": "Muy Alta Demanda",
-            "descripcion": "¡¡Combo de alitas 2x1 que vence HOY!! ¡No te lo pierdas! 🔥🔥🔥"
+            "descripcion": "¡¡Combo de alitas 2x1 que vence HOY!! ¡No te lo pierdas! 🔥🔥🔥",
+            "imagen": "imagenes/alitas.jpeg"
         },
         {
             "id": "P001",
@@ -57,7 +63,8 @@ base_datos_global = {
             "distancia": "300 m",
             "hora_hasta": "22:00",
             "demanda": "Alta Demanda",
-            "descripcion": "Combo 2x1 de pizza grande + bebidas para estudiantes de UCATEC. ¡Perfecto para entre clases!"
+            "descripcion": "Combo 2x1 de pizza grande + bebidas para estudiantes de UCATEC. ¡Perfecto para entre clases!",
+            "imagen": "imagenes/pizza.jpeg"
         },
         {
             "id": "P002",
@@ -70,7 +77,8 @@ base_datos_global = {
             "distancia": "800 m",
             "hora_hasta": "23:00",
             "demanda": "Muy Alta Demanda",
-            "descripcion": "2x1 en baldes de 20 alitas BBQ o picantes. ¡Ideal para ver partidos con amigos!"
+            "descripcion": "2x1 en baldes de 20 alitas BBQ o picantes. ¡Ideal para ver partidos con amigos!",
+            "imagen": "imagenes/alitas blade.jpeg"
         },
         {
             "id": "P003",
@@ -83,7 +91,8 @@ base_datos_global = {
             "distancia": "700 m",
             "hora_hasta": "21:30",
             "demanda": "Media Demanda",
-            "descripcion": "2x1 en hamburguesas de res premium con papas fritas y salsa especial."
+            "descripcion": "2x1 en hamburguesas de res premium con papas fritas y salsa especial.",
+            "imagen": "imagenes/hamburguesas.jpeg"
         },
         {
             "id": "E001",
@@ -96,7 +105,8 @@ base_datos_global = {
             "distancia": "500 m",
             "hora_hasta": "23:30",
             "demanda": "Alta Demanda",
-            "descripcion": "2x1 en entradas de cine los miércoles para todos los estrenos del mes!"
+            "descripcion": "2x1 en entradas de cine los miércoles para todos los estrenos del mes!",
+            "imagen": "imagenes/cine1.jpeg"
         },
         {
             "id": "E002",
@@ -109,7 +119,8 @@ base_datos_global = {
             "distancia": "1.2 km",
             "hora_hasta": "23:00",
             "demanda": "Media Demanda",
-            "descripcion": "2x1 entradas 2D de lunes a jueves. Incluye combo de palomitas!"
+            "descripcion": "2x1 entradas 2D de lunes a jueves. Incluye combo de palomitas!",
+            "imagen": "imagenes/cine 2.jpeg"
         },
         {
             "id": "A001",
@@ -122,7 +133,8 @@ base_datos_global = {
             "distancia": "2.5 km",
             "hora_hasta": "24:00",
             "demanda": "Baja Demanda",
-            "descripcion": "2x1 en habitaciones dobles para fin de semana. Incluye desayuno buffet!"
+            "descripcion": "2x1 en habitaciones dobles para fin de semana. Incluye desayuno buffet!",
+            "imagen": "imagenes/hospedaje.jpeg"
         },
         {
             "id": "A002",
@@ -135,7 +147,8 @@ base_datos_global = {
             "distancia": "600 m",
             "hora_hasta": "24:00",
             "demanda": "Media Demanda",
-            "descripcion": "2x1 en habitaciones compartidas o privadas. Perfecto para viajeros!"
+            "descripcion": "2x1 en habitaciones compartidas o privadas. Perfecto para viajeros!",
+            "imagen": "imagenes/motel.jpeg"
         },
         {
             "id": "D001",
@@ -148,7 +161,8 @@ base_datos_global = {
             "distancia": "1.1 km",
             "hora_hasta": "22:00",
             "demanda": "Alta Demanda",
-            "descripcion": "2x1 en membresías mensuales de gimnasio. Incluye clases grupales!"
+            "descripcion": "2x1 en membresías mensuales de gimnasio. Incluye clases grupales!",
+            "imagen": "imagenes/gym.jpeg"
         },
         {
             "id": "D002",
@@ -161,7 +175,8 @@ base_datos_global = {
             "distancia": "1.5 km",
             "hora_hasta": "21:00",
             "demanda": "Media Demanda",
-            "descripcion": "2x1 en paquetes de 10 clases de CrossFit. ¡Ponte en forma con un amigo!"
+            "descripcion": "2x1 en paquetes de 10 clases de CrossFit. ¡Ponte en forma con un amigo!",
+            "imagen": "imagenes/crosfit.jpeg"
         },
         {
             "id": "S001",
@@ -174,7 +189,8 @@ base_datos_global = {
             "distancia": "450 m",
             "hora_hasta": "21:00",
             "demanda": "Alta Demanda",
-            "descripcion": "2x1 en packs de snacks, bebidas y galletas. ¡Stocka tu nevera!"
+            "descripcion": "2x1 en packs de snacks, bebidas y galletas. ¡Stocka tu nevera!",
+            "imagen": "imagenes/hipermaxsi.jpeg"
         },
         {
             "id": "S002",
@@ -187,7 +203,8 @@ base_datos_global = {
             "distancia": "1.8 km",
             "hora_hasta": "18:00",
             "demanda": "Media Demanda",
-            "descripcion": "2x1 en kg de frutas y verduras frescas todos los días!"
+            "descripcion": "2x1 en kg de frutas y verduras frescas todos los días!",
+            "imagen": "imagenes/hipermaxcifrutas.jpeg"
         },
         {
             "id": "F001",
@@ -200,7 +217,8 @@ base_datos_global = {
             "distancia": "900 m",
             "hora_hasta": "03:00",
             "demanda": "Muy Alta Demanda",
-            "descripcion": "2x1 en manillas de ingreso los sábados. Incluye una bebida gratis!"
+            "descripcion": "2x1 en manillas de ingreso los sábados. Incluye una bebida gratis!",
+            "imagen": "imagenes/mamba.jpeg"
         },
         {
             "id": "F002",
@@ -213,7 +231,8 @@ base_datos_global = {
             "distancia": "1.4 km",
             "hora_hasta": "04:00",
             "demanda": "Alta Demanda",
-            "descripcion": "2x1 en covers de discoteca con vista 360° de la ciudad!"
+            "descripcion": "2x1 en covers de discoteca con vista 360° de la ciudad!",
+            "imagen": "imagenes/euphoria.jpeg"
         },
         {
             "id": "C001",
@@ -226,7 +245,8 @@ base_datos_global = {
             "distancia": "600 m",
             "hora_hasta": "19:00",
             "demanda": "Media Demanda",
-            "descripcion": "2x1 en cafés especiales (latte, capuchino, flat white). Perfecto para reuniones!"
+            "descripcion": "2x1 en cafés especiales (latte, capuchino, flat white). Perfecto para reuniones!",
+            "imagen": "imagenes/cafe americano.jpeg"
         },
         {
             "id": "C002",
@@ -239,7 +259,8 @@ base_datos_global = {
             "distancia": "550 m",
             "hora_hasta": "18:30",
             "demanda": "Baja Demanda",
-            "descripcion": "2x1 en tés selectos + porción de pastel de queso!"
+            "descripcion": "2x1 en tés selectos + porción de pastel de queso!",
+            "imagen": "imagenes/te pastel.jpeg"
         }
     ],
     "historial_matches": [ 
@@ -272,13 +293,14 @@ base_datos_global = {
         {"usuario": "daniela@universidad.edu.bo", "genero": "Femenino", "oferta_id": "P000", "hora_inicio": 19, "hora_fin": 21, "filtro_genero": False}
     ],
     "usuarios": {
-        "ana@universidad.edu.bo": {"nombre": "Ana Paredes", "password": "123", "rol": "estudiante", "genero": "Femenino", "confianza": 5.0, "matches": 4, "reportes": 0, "estado": "Activo"},
-        "carlos@universidad.edu.bo": {"nombre": "Carlos López", "password": "123", "rol": "estudiante", "genero": "Masculino", "confianza": 4.5, "matches": 2, "reportes": 0, "estado": "Activo"},
-        "daniela@universidad.edu.bo": {"nombre": "Daniela Uribe", "password": "123", "rol": "estudiante", "genero": "Femenino", "confianza": 4.8, "matches": 3, "reportes": 0, "estado": "Activo"},
+        "ana@universidad.edu.bo": {"nombre": "Ana Paredes", "password": "123", "rol": "usuario", "genero": "Femenino", "confianza": 5.0, "matches": 4, "reportes": 0, "estado": "Activo"},
+        "carlos@universidad.edu.bo": {"nombre": "Carlos López", "password": "123", "rol": "usuario", "genero": "Masculino", "confianza": 4.5, "matches": 2, "reportes": 0, "estado": "Activo"},
+        "daniela@universidad.edu.bo": {"nombre": "Daniela Uribe", "password": "123", "rol": "usuario", "genero": "Femenino", "confianza": 4.8, "matches": 3, "reportes": 0, "estado": "Activo"},
         "usuario@profesional.com": {"nombre": "María Fernández", "password": "123", "rol": "usuario", "genero": "Femenino", "profesion": "Marketing Digital", "confianza": 5.0, "matches": 3, "reportes": 0, "estado": "Activo"},
         "comercio@local.com": {"nombre": "Restaurante Sabores", "password": "123", "rol": "comercio"},
-        "xydarkodayx@ucatec.edu.bo": {"nombre": "karlo dante pacheco valencia", "password": "1008", "rol": "estudiante", "genero": "Masculino", "confianza": 5.0, "matches": 0, "reportes": 0, "estado": "Activo"},
-        "oscarmusic@ucatec.edu.bo": {"nombre": "oscar abasto", "password": "oscar1234", "rol": "estudiante", "genero": "Masculino", "confianza": 5.0, "matches": 0, "reportes": 0, "estado": "Activo"}
+        "xydarkodayx@ucatec.edu.bo": {"nombre": "karlo dante pacheco valencia", "password": "1008", "rol": "usuario", "genero": "Masculino", "confianza": 5.0, "matches": 0, "reportes": 0, "estado": "Activo"},
+        "oscarmusic@ucatec.edu.bo": {"nombre": "oscar abasto", "password": "oscar1234", "rol": "usuario", "genero": "Masculino", "confianza": 5.0, "matches": 0, "reportes": 0, "estado": "Activo"},
+        "test@user.com": {"nombre": "Usuario Prueba", "password": "12345", "rol": "usuario", "genero": "Masculino", "profesion": "Desarrollador", "confianza": 5.0, "matches": 2, "reportes": 0, "estado": "Activo"}
     }
 }
 
@@ -323,3 +345,141 @@ def configurar_animacion_boton(boton, color_normal, color_hover, color_active):
 def configurar_animacion_enlace(enlace, color_normal, color_hover):
     enlace.bind("<Enter>", lambda e: enlace.config(fg=color_hover))
     enlace.bind("<Leave>", lambda e: enlace.config(fg=color_normal))
+
+
+# --- CLASE IA MATCHMAKER ACTIVO ---
+class IAMatchmaker:
+    def __init__(self, base_datos):
+        self.base_datos = base_datos
+        
+        # Zonas de Cochabamba con coordenadas simuladas (para cálculo de distancia)
+        self.zonas_coordenadas = {
+            "Zona Centro": (0, 0),
+            "Zona Norte / UCATEC": (1, 2),
+            "La Recoleta / Calle 21": (-1, 1),
+            "El Prado / Av. Ballivián": (0, 1),
+            "Zona Centro / Cine Center": (0.5, 0.5),
+            "Zona Norte / Av. América": (1.5, 2.5),
+            "Cala Cala / Hotel Boutique": (3, 4),
+            "Zona Sur / Mercado 25 de Mayo": (-2, -2),
+            "Av. América / CrossFit CBBA": (2, 3),
+            "Pasaje Aranjuez / Club XYZ": (0, -1),
+            "Zona El Prado / Café D'Crem": (0, 0.5),
+            "Zona UCATEC": (1, 2),
+            "Centro Comercial Las Vegas": (0.8, 0.8),
+            "Zona Norte": (1, 2),
+            "Zona Central": (0, 0),
+            "Cancha y Mercado": (-0.5, -0.5),
+            "Av. América": (1.5, 2.5)
+        }
+        
+        # Mensajes de estado para la animación
+        self.mensajes_estado = [
+            "🔍 Analizando promociones activas en Zona Norte...",
+            "📡 Cruzando ventanas horarias disponibles...",
+            "✨ Verificando perfiles de confianza alta...",
+            "📍 Calculando proximidad geográfica...",
+            "🔗 Encontrando compatibilidades perfectas...",
+            "⚡ Optimizando matches cercanos...",
+            "📊 Validando disponibilidad de usuarios...",
+            "🌟 ¡Match Cercano Encontrado! Conectando..."
+        ]
+    
+    def calcular_distancia_simulada(self, zona1, zona2):
+        """Calcula distancia simulada entre dos zonas de Cochabamba"""
+        coord1 = self.zonas_coordenadas.get(zona1, (0, 0))
+        coord2 = self.zonas_coordenadas.get(zona2, (0, 0))
+        distancia = ((coord1[0] - coord2[0])**2 + (coord1[1] - coord2[1])**2)**0.5
+        return distancia  # Retorna distancia en unidades simuladas
+    
+    def verificar_coincidencia_oferta(self, oferta_id1, oferta_id2):
+        """Verifica si dos usuarios han seleccionado la misma oferta"""
+        return oferta_id1 == oferta_id2
+    
+    def verificar_ventana_horaria(self, h1_inicio, h1_fin, h2_inicio, h2_fin):
+        """Verifica si las ventanas horarias se superponen"""
+        return not (h1_fin <= h2_inicio or h2_fin <= h1_inicio)
+    
+    def encontrar_matches(self, usuario_actual, oferta_seleccionada, rango_distancia=5, 
+                         hora_inicio=12, hora_fin=14, filtro_genero=None, 
+                         filtro_confianza_min=3.0):
+        """
+        Motor principal de emparejamiento:
+        - usuario_actual: Diccionario con datos del usuario actual
+        - oferta_seleccionada: Diccionario con la promoción seleccionada
+        - rango_distancia: Rango máximo de distancia (km simulados)
+        - hora_inicio/hora_fin: Ventana horaria del usuario
+        - filtro_genero: None (sin filtro) o género específico
+        - filtro_confianza_min: Nivel mínimo de confianza
+        """
+        matches = []
+        zona_usuario = usuario_actual.get("zona_preferida", "Zona Centro")
+        
+        for solicitud in self.base_datos.get("pool_solicitudes", []):
+            # Obtener datos del usuario solicitante
+            email_solicitante = solicitud.get("usuario")
+            usuario_solicitante = self.base_datos["usuarios"].get(email_solicitante, {})
+            
+            # Saltarse el usuario actual
+            if usuario_solicitante.get("nombre") == usuario_actual.get("nombre"):
+                continue
+            
+            # 1. Verificar coincidencia de oferta
+            if not self.verificar_coincidencia_oferta(
+                solicitud.get("oferta_id"),
+                oferta_seleccionada.get("id")
+            ):
+                continue
+            
+            # 2. Verificar ventana horaria
+            if not self.verificar_ventana_horaria(
+                hora_inicio, hora_fin,
+                solicitud.get("hora_inicio", 12),
+                solicitud.get("hora_fin", 14)
+            ):
+                continue
+            
+            # 3. Verificar proximidad geográfica
+            oferta_zona = oferta_seleccionada.get("zona", "Zona Centro")
+            distancia = self.calcular_distancia_simulada(zona_usuario, oferta_zona)
+            if distancia > rango_distancia:
+                continue
+            
+            # 4. Aplicar filtros adicionales
+            if filtro_genero and usuario_solicitante.get("genero") != filtro_genero:
+                continue
+                
+            if usuario_solicitante.get("confianza", 3.0) < filtro_confianza_min:
+                continue
+            
+            # 5. Todo coincide! Agregar a la lista de matches
+            matches.append({
+                "usuario": usuario_solicitante,
+                "solicitud": solicitud,
+                "distancia": distancia,
+                "oferta": oferta_seleccionada
+            })
+        
+        # Ordenar por confianza y distancia
+        matches.sort(key=lambda x: (-x["usuario"].get("confianza", 0), x["distancia"]))
+        return matches
+    
+    def obtener_mensaje_estado(self, paso):
+        """Devuelve un mensaje de estado para la animación"""
+        if paso < len(self.mensajes_estado):
+            return self.mensajes_estado[paso]
+        return self.mensajes_estado[-1]
+    
+    def agregar_solicitud_pool(self, email_usuario, oferta_id, hora_inicio, hora_fin, filtro_genero=False):
+        """Agrega una solicitud al pool de búsqueda"""
+        usuario = self.base_datos["usuarios"].get(email_usuario, {})
+        solicitud = {
+            "usuario": email_usuario,
+            "genero": usuario.get("genero", "No especificado"),
+            "oferta_id": oferta_id,
+            "hora_inicio": hora_inicio,
+            "hora_fin": hora_fin,
+            "filtro_genero": filtro_genero
+        }
+        self.base_datos["pool_solicitudes"].append(solicitud)
+        guardar_datos()

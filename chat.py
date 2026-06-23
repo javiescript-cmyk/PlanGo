@@ -91,6 +91,8 @@ class SalaChatTemporal(tk.Frame):
         self.timer_activo = True
         self.primero_mensaje = True
         self.escribiendo = False
+        self.lbl_escribiendo = None
+        self.stickers_visibles = False
         
         self.hora_expiracion = datetime.now() + timedelta(minutes=30) # 30 minutos para chat
         
@@ -158,6 +160,15 @@ class SalaChatTemporal(tk.Frame):
         
         # Indicador de escribiendo (se creará dinámicamente)
         
+        # ── PANEL DE STICKERS (OCULTO POR DEFECTO) ───────────────────────
+        self.frame_stickers = tk.Frame(self, bg="#1E2732", height=80)
+        stickers_list = ["😊", "😂", "😍", "🎉", "👍", "🔥", "❤️", "👏"]
+        
+        for sticker in stickers_list:
+            btn = tk.Button(self.frame_stickers, text=sticker, font=("Helvetica", 20), bg="#273441", fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", padx=10, pady=5, command=lambda s=sticker: self._enviar_sticker(s))
+            btn.pack(side="left", padx=5, pady=10)
+            configurar_animacion_boton(btn, "#273441", "#3D4F5F", "#4A6070")
+        
         # ── ENTRADA DE MENSAJE (MÁS PROFESIONAL) ───────────────────────
         frame_entrada = tk.Frame(self, bg="#1E2732", height=65)
         frame_entrada.pack(fill="x", side="bottom")
@@ -165,6 +176,11 @@ class SalaChatTemporal(tk.Frame):
         
         campo = tk.Frame(frame_entrada, bg="#1E2732")
         campo.pack(fill="x", padx=12, pady=12)
+        
+        # Botón stickers
+        btn_stickers = tk.Label(campo, text="😊", font=("Helvetica", 16), bg="#1E2732", fg=COLOR_TEXT_MUTED, cursor="hand2")
+        btn_stickers.pack(side="left", padx=(0, 8))
+        btn_stickers.bind("<Button-1>", lambda e: self._toggle_stickers())
         
         # Botón adjuntar (solo visual)
         tk.Label(campo, text="📎", font=("Helvetica", 16), bg="#1E2732", fg=COLOR_TEXT_MUTED, cursor="hand2").pack(side="left", padx=(0, 8))
@@ -187,6 +203,26 @@ class SalaChatTemporal(tk.Frame):
     def _poner_placeholder(self):
         if not self.ent_msg.get().strip():
             self.ent_msg.insert(0, "Escribe un mensaje...")
+    
+    def _toggle_stickers(self):
+        self.stickers_visibles = not self.stickers_visibles
+        if self.stickers_visibles:
+            # Pack the sticker panel above the input area
+            self.frame_stickers.pack(fill="x", side="bottom", before=self.frame_stickers.master.winfo_children()[-1])
+        else:
+            self.frame_stickers.pack_forget()
+    
+    def _enviar_sticker(self, sticker):
+        self.agregar_mensaje(sticker, "yo")
+        if self.stickers_visibles:
+            self._toggle_stickers()
+        # Responder con un sticker mock
+        self.after(1500, lambda: self._responder_con_sticker())
+    
+    def _responder_con_sticker(self):
+        stickers_respuesta = ["👍", "😊", "🎉", "❤️"]
+        self._mostrar_escribiendo()
+        self.after(1200, lambda: self._terminar_escribiendo(random.choice(stickers_respuesta)))
     
     def ver_perfil(self):
         PerfilUsuario(self, self.match_encontrado)
@@ -287,6 +323,7 @@ class SalaChatTemporal(tk.Frame):
     
     def agregar_mensaje(self, texto, remitente):
         es_yo = remitente == "yo"
+        es_sticker = len(texto) <= 2 and any(emoji in texto for emoji in ["😊", "😂", "😍", "🎉", "👍", "🔥", "❤️", "👏", "🟢"])
         
         # Fila del mensaje
         fila = tk.Frame(self.frame_burbujas, bg="#0F1419")
@@ -307,16 +344,20 @@ class SalaChatTemporal(tk.Frame):
             av_peq.create_text(14, 14, text=self.match_encontrado["nombre"][0].upper(), font=("Helvetica", 11, "bold"), fill=COLOR_TEXT_MAIN)
         
         # Burbuja
+        fuente = ("Helvetica", 28) if es_sticker else ("Helvetica", 11)
+        padding_x = 20 if es_sticker else 14
+        padding_y = 15 if es_sticker else 10
+        
         burbuja = tk.Label(
             burbuja_frame,
             text=texto,
-            font=("Helvetica", 11),
+            font=fuente,
             bg=COLOR_ACCENT_RED if es_yo else "#1E88E5",
             fg=COLOR_TEXT_MAIN,
             wraplength=280,
             justify="left",
-            padx=14,
-            pady=10
+            padx=padding_x,
+            pady=padding_y
         )
         burbuja.pack(side="left")
         

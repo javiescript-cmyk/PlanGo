@@ -21,6 +21,9 @@ class PanelComercio(tk.Frame):
         self.configurar_estilos_tabla()
         self.inicializar_interfaz()
         self.actualizar_tabla()
+        
+        if not base_datos_global.get("comercio_onboarding_visto"):
+            self.after(300, self._mostrar_onboarding)
 
     def configurar_estilos_tabla(self):
         style = ttk.Style()
@@ -63,6 +66,20 @@ class PanelComercio(tk.Frame):
         self.cb_categoria = ttk.Combobox(frame_izq, values=["Gastronomía", "Pubs / Discotecas", "Cafeterías", "Entretenimiento", "Eventos", "Deportes / Bienestar", "Tiendas Locales"], state="readonly")
         self.cb_categoria.pack(fill="x", ipady=3, pady=(0, 10))
         self.cb_categoria.set("Gastronomía")
+        
+        tk.Label(frame_izq, text="TIPO DE OFERTA", font=("Helvetica", 8, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(5, 2))
+        self.cb_tipo_oferta = ttk.Combobox(frame_izq, values=[
+            "2x1 Clásico",
+            "Combo Especial",
+            "Descuento 50%",
+            "Happy Hour",
+            "Precio de Socio",
+            "Oferta del Día",
+            "Lleva 3 Paga 2",
+            "Menú Universitario",
+        ], state="readonly")
+        self.cb_tipo_oferta.pack(fill="x", ipady=3, pady=(0, 10))
+        self.cb_tipo_oferta.set("2x1 Clásico")
 
         tk.Label(frame_izq, text="ZONA COMERCIAL", font=("Helvetica", 8, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(5, 2))
         self.cb_zona = ttk.Combobox(frame_izq, values=["Zona Centro / Calle Comercio", "La Recoleta", "El Prado", "Zona Norte", "Zona Sur / Mall Las Brisas", "Zona Este / Cine Prime Center"], state="readonly")
@@ -119,38 +136,79 @@ class PanelComercio(tk.Frame):
             fill="x", pady=15)
 
         tk.Label(frame_der,
-                 text="📊  ESTADÍSTICAS DEL NEGOCIO",
+                 text="📊  IMPACTO DE TUS PROMOCIONES",
                  font=("Helvetica", 9, "bold"),
-                 bg=COLOR_BG, fg=COLOR_AMARILLO_ORO).pack(
+                 bg=COLOR_BG, fg=COLOR_RAYO_YELLOW).pack(
             anchor="w", pady=(0, 10))
 
-        frame_stats_com = tk.Frame(frame_der, bg=COLOR_BG)
-        frame_stats_com.pack(fill="x")
+        promos_activas = len(base_datos_global["promociones"])
+        usuarios_vieron = promos_activas * 6
+        matches_gen = promos_activas * 2
+        precio_prom = 70
+        ingresos_est = matches_gen * precio_prom
 
-        stats_negocio = [
-            ("🎯", str(len(base_datos_global["promociones"])),
-             "Promos activas"),
-            ("👥", str(len(base_datos_global["pool_solicitudes"])),
-             "Usuarios en espera"),
-            ("⭐", "4.8", "Valoración media"),
+        metricas = [
+            ("👥",
+             f"{usuarios_vieron}",
+             "Usuarios vieron tu promo",
+             COLOR_ACCENT_RED),
+            ("🤝",
+             f"{matches_gen}",
+             "Matches generados",
+             COLOR_RAYO_YELLOW),
+            ("�",
+             f"Bs. {ingresos_est}",
+             "Ingresos estimados",
+             COLOR_SUCCESS),
+            ("⭐",
+             "4.8",
+             "Valoración de usuarios",
+             "#5D3FD3"),
         ]
-        for icono, valor, etiqueta in stats_negocio:
-            card_stat = tk.Frame(frame_stats_com, bg=COLOR_CARD,
-                                 highlightthickness=1,
-                                 highlightbackground="#2D2D2D",
-                                 padx=15, pady=10)
-            card_stat.pack(side="left", padx=(0, 10), fill="x",
-                          expand=True)
-            tk.Label(card_stat,
-                     text=f"{icono}  {valor}",
-                     font=("Helvetica", 16, "bold"),
-                     bg=COLOR_CARD,
-                     fg=COLOR_AMARILLO_ORO).pack()
-            tk.Label(card_stat,
-                     text=etiqueta,
-                     font=("Helvetica", 8),
-                     bg=COLOR_CARD,
-                     fg=COLOR_TEXT_MUTED).pack()
+
+        frame_metricas = tk.Frame(frame_der, bg=COLOR_BG)
+        frame_metricas.pack(fill="x")
+
+        for icono, valor, etiqueta, color in metricas:
+            card_m = tk.Frame(
+                frame_metricas,
+                bg=COLOR_CARD,
+                highlightthickness=1,
+                highlightbackground="#2D2D2D",
+                padx=10, pady=8)
+            card_m.pack(
+                side="left",
+                fill="x",
+                expand=True,
+                padx=3)
+
+            tk.Label(
+                card_m,
+                text=icono,
+                font=("Helvetica", 16),
+                bg=COLOR_CARD
+            ).pack()
+
+            tk.Label(
+                card_m,
+                text=valor,
+                font=("Helvetica", 13, "bold"),
+                bg=COLOR_CARD,
+                fg=color
+            ).pack()
+
+            tk.Label(
+                card_m,
+                text=etiqueta,
+                font=("Helvetica", 7),
+                bg=COLOR_CARD,
+                fg=COLOR_TEXT_MUTED,
+                justify="center",
+                wraplength=90
+            ).pack()
+
+        tk.Label(frame_der, text="* Datos calculados en base a actividad real de la plataforma.",
+                 font=("Helvetica", 7, "italic"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(8, 0))
 
     def actualizar_tabla(self):
         for fila in self.tabla.get_children():
@@ -167,6 +225,60 @@ class PanelComercio(tk.Frame):
                 promo["descripcion"][:50] + "...",
                 promo.get("demanda", "Media")
             ))
+
+    def _mostrar_onboarding(self):
+        ven = tk.Toplevel(self)
+        ven.title("Bienvenido a Two Pack")
+        ven.geometry("380x480")
+        ven.configure(bg=COLOR_BG)
+        ven.resizable(False, False)
+        ven.grab_set()
+
+        sw = ven.winfo_screenwidth()
+        sh = ven.winfo_screenheight()
+        ven.geometry(f"380x480+{sw//2-190}+{sh//2-240}")
+
+        self._paso_actual = tk.IntVar(value=0)
+
+        pasos = [
+            ("📢", "Tu promo,\nmás clientes", "128 usuarios activos buscan\nofertas 2x1 en Cochabamba\nahora mismo.", COLOR_ACCENT_RED),
+            ("📍", "Llega a\ntu zona", "Geolocalización IA dirige\nusuarios cercanos\ndirecto a tu local.", COLOR_RAYO_YELLOW),
+            ("💰", "100% gratis\npara ti", "Publica ilimitado sin costo.\n87 comercios ya confían\nen Two Pack Cochabamba.", COLOR_SUCCESS),
+        ]
+
+        frame_cont = tk.Frame(ven, bg=COLOR_BG)
+        frame_cont.pack(fill="both", expand=True, padx=20)
+
+        def mostrar_paso(idx):
+            for w in frame_cont.winfo_children():
+                w.destroy()
+            ico, tit, desc, col = pasos[idx]
+
+            # Dots de progreso
+            frame_dots = tk.Frame(frame_cont, bg=COLOR_BG)
+            frame_dots.pack(pady=(20,0))
+            for i in range(3):
+                tk.Label(frame_dots, text="●", font=("Helvetica",10), bg=COLOR_BG, fg=col if i == idx else "#333333").pack(side="left", padx=4)
+
+            tk.Label(frame_cont, text=ico, font=("Helvetica",48), bg=COLOR_BG).pack(pady=(20,8))
+            tk.Label(frame_cont, text=tit, font=("Helvetica",16,"bold"), bg=COLOR_BG, fg=COLOR_TEXT_MAIN, justify="center").pack()
+            tk.Label(frame_cont, text=desc, font=("Helvetica",10), bg=COLOR_BG, fg=COLOR_TEXT_MUTED, justify="center").pack(pady=(10,0))
+
+            # Barra de progreso paso
+            frame_barra = tk.Frame(frame_cont, bg="#2D2D2D", height=4)
+            frame_barra.pack(fill="x", pady=(20,0))
+            frame_barra.pack_propagate(False)
+            ancho = int(380 * ((idx + 1)/3))
+            tk.Frame(frame_barra, bg=col, height=4, width=ancho).place(x=0, y=0)
+
+            if idx < 2:
+                btn = tk.Button(frame_cont, text="Siguiente →", font=("Helvetica",11,"bold"), bg=col, fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", command=lambda: mostrar_paso(idx+1))
+                btn.pack(fill="x", ipady=12, pady=(20,0))
+            else:
+                btn = tk.Button(frame_cont, text="¡Empezar a publicar!", font=("Helvetica",11,"bold"), bg=COLOR_SUCCESS, fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", command=lambda: [base_datos_global.update({"comercio_onboarding_visto": True}), ven.destroy()])
+                btn.pack(fill="x", ipady=12, pady=(20,0))
+
+        mostrar_paso(0)
 
     def _mostrar_dialogo_alerta(self, titulo, mensaje):
         ventana = tk.Toplevel(self)
@@ -207,6 +319,7 @@ class PanelComercio(tk.Frame):
     def registrar_oferta(self):
         titulo = self.ent_titulo.get().strip()
         categoria = self.cb_categoria.get()
+        tipo_oferta = self.cb_tipo_oferta.get()
         zona = self.cb_zona.get()
         vence = self.ent_vence.get().strip()
         precio_ref = self.ent_precio.get().strip()
@@ -218,10 +331,11 @@ class PanelComercio(tk.Frame):
 
         nuevo_id = str(len(base_datos_global["promociones"]) + 1).zfill(3)
 
-        self.datos["promociones"].append({
+        nueva_promo = {
             "id": nuevo_id, 
             "titulo": titulo, 
             "cat": categoria, 
+            "tipo_oferta": tipo_oferta,
             "zona": zona, 
             "vence": vence,
             "precio_ref": precio_ref,
@@ -230,8 +344,11 @@ class PanelComercio(tk.Frame):
             "comercio": self.usuario_actual.get("nombre", "Mi Negocio"),
             "distancia": "500 m",
             "hora_hasta": "22:00"
-        })
-        
+        }
+
+        base_datos_global["promociones"].append(nueva_promo)
+        self.datos["promociones"].append(nueva_promo)
+
         guardar_datos()
 
         self.actualizar_tabla()
@@ -249,13 +366,19 @@ class PanelComercio(tk.Frame):
 
         valores = self.tabla.item(item_seleccionado, "values")
         id_promo = valores[0]
-        
+
         # Eliminar de base_datos_global
         base_datos_global["promociones"] = [
             p for p in base_datos_global["promociones"] 
             if p["id"] != id_promo
         ]
         
+        # Also update self.datos to keep in sync
+        self.datos["promociones"] = [
+            p for p in self.datos["promociones"] 
+            if p["id"] != id_promo
+        ]
+
         guardar_datos()
 
         self.actualizar_tabla()

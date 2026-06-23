@@ -71,6 +71,19 @@
       "vence": "31/07/2026",
       "precio_ref": "80",
       "descripcion": "Recorre 5 puntos gastronómicos emblemáticos de Cochabamba con guía incluido. Dos personas por el precio de una. Sábados 10:00 a 13:00."
+    },
+    {
+      "id": "017",
+      "titulo": "salchipapa parejas duo",
+      "cat": "Gastronomía",
+      "zona": "La Recoleta",
+      "vence": "25/06/2026",
+      "precio_ref": "30",
+      "descripcion": "rica salchipapa 2x1 para todas las parejas aprovechen descunto de two pack",
+      "demanda": "Alta",
+      "comercio": "karlospapas",
+      "distancia": "500 m",
+      "hora_hasta": "22:00"
     }
   ],
   "historial_matches": [
@@ -201,6 +214,27 @@
       "confianza": 5.0,
       "matches": 0,
       "reportes": 0,
+      "estado": "Activo"
+    },
+    "karloempresas@gmail.com": {
+      "nombre": "empresakarlo",
+      "password": "1008",
+      "rol": "usuario",
+      "genero": "Masculino",
+      "profesion": "",
+      "confianza": 5.0,
+      "matches": 0,
+      "reportes": 0,
+      "estado": "Activo"
+    },
+    "papaskarlo@gmail.com": {
+      "nombre": "karlospapas",
+      "password": "1008",
+      "rol": "comercio",
+      "direccion": "av/america",
+      "telefono": "71299938",
+      "categoria": "Gastronomía",
+      "confianza": 5.0,
       "estado": "Activo"
     }
   }

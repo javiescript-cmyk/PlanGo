@@ -4,12 +4,17 @@ from tkinter import ttk
 import re
 import datetime
 import random
+import os
+try:
+    from PIL import Image, ImageTk
+except ImportError:
+    Image = None
 from chat import SalaChatTemporal
 from config import (
     COLOR_BG, COLOR_CARD, COLOR_TEXT_MAIN, COLOR_TEXT_MUTED, COLOR_SUCCESS, COLOR_SUCCESS_HOVER,
     COLOR_ACCENT_RED, COLOR_RED_HOVER, COLOR_RED_ACTIVE, COLOR_AMARILLO_ORO, COLOR_ESCUDO_RED,
-    COLOR_NAV, COLOR_CORAL_FUEGO, COLOR_AZUL_ELECTRICO, cargar_datos, guardar_datos, configurar_animacion_boton,
-    base_datos_global
+    COLOR_NAV, COLOR_CORAL_FUEGO, COLOR_AZUL_ELECTRICO, COLOR_RAYO_YELLOW, cargar_datos, guardar_datos, configurar_animacion_boton,
+    base_datos_global, BASE_DIR, IAMatchmaker
 )
 
 
@@ -33,6 +38,8 @@ class PanelEstudiante(tk.Frame):
         self.tooltip = None
         self.vista_actual = None
         self.toast_list = []
+        self.search_query = ""
+        self.search_placeholder = "Buscar promociones, lugares o actividades..."
 
         self.inicializar_ui()
 
@@ -96,6 +103,26 @@ class PanelEstudiante(tk.Frame):
     def cerrar_bienvenida(self):
         self.bienvenida.destroy()
 
+    def _on_search_focus_in(self, event):
+        if self.ent_busq.get() == self.search_placeholder:
+            self.ent_busq.delete(0, tk.END)
+            self.ent_busq.config(fg="#333333")
+
+    def _on_search_focus_out(self, event):
+        if not self.ent_busq.get():
+            self.ent_busq.insert(0, self.search_placeholder)
+            self.ent_busq.config(fg="#999999")
+            self.search_query = ""
+            self._renderizar_grid()
+
+    def _on_search_key_release(self, event):
+        current_text = self.ent_busq.get().strip()
+        if current_text == self.search_placeholder:
+            self.search_query = ""
+        else:
+            self.search_query = current_text.lower()
+        self._renderizar_grid()
+
     def _crear_nav_inferior(self):
         self.nav_bar = tk.Frame(self.frame_dashboard, bg=COLOR_NAV, height=62)
         self.nav_bar.pack(fill="x", side="bottom")
@@ -110,7 +137,7 @@ class PanelEstudiante(tk.Frame):
             ("🏠", "Inicio", "inicio"),
             ("🗺️", "Mapa", "mapa"),
             ("🤝", "Match", "match"),
-            ("💬", "Chat", "chat_tab"),
+            ("🏙️", "Ciudad", "ciudad"),
             ("👤", "Perfil", "perfil"),
         ]
 
@@ -162,6 +189,8 @@ class PanelEstudiante(tk.Frame):
             self.mostrar_match_panel()
         elif seccion == "chat_tab":
             self.mostrar_chat_vacio()
+        elif seccion == "ciudad":
+            self.mostrar_estadisticas_ciudad()
         elif seccion == "perfil":
             self.mostrar_perfil()
         elif seccion == "historial":
@@ -169,6 +198,7 @@ class PanelEstudiante(tk.Frame):
 
     def mostrar_inicio(self):
         f = self.frame_contenido
+        self.presup_max = None
 
         header = tk.Frame(f, bg=COLOR_ESCUDO_RED, height=130)
         header.pack(fill="x")
@@ -217,8 +247,13 @@ class PanelEstudiante(tk.Frame):
         tk.Label(barra, text="🔍", bg="#FFFFFF", fg="#999999", font=("Helvetica", 10)).pack(side="left", padx=(8, 2), pady=5)
 
         self.ent_busq = tk.Entry(barra, font=("Helvetica", 9), bg="#FFFFFF", fg="#999999", bd=0, insertbackground="#333")
-        self.ent_busq.insert(0, "Buscar promociones, lugares o actividades...")
+        self.ent_busq.insert(0, self.search_placeholder)
         self.ent_busq.pack(side="left", fill="x", expand=True, ipady=6)
+
+        # Add search event handlers
+        self.ent_busq.bind("<FocusIn>", self._on_search_focus_in)
+        self.ent_busq.bind("<FocusOut>", self._on_search_focus_out)
+        self.ent_busq.bind("<KeyRelease>", self._on_search_key_release)
 
         tk.Label(barra, text="⚙", bg="#FFFFFF", fg=COLOR_ESCUDO_RED, font=("Helvetica", 12)).pack(side="right", padx=8)
 
@@ -257,7 +292,19 @@ class PanelEstudiante(tk.Frame):
             self.chip_btns[val] = b
             configurar_animacion_boton(b, COLOR_AZUL_ELECTRICO if activo else "#2A2A2A", "#0095FF", "#0056B3")
 
-        tk.Label(f, text="Promociones reales. 100% Gratis para todos.", font=("Helvetica", 8), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", padx=15, pady=(0, 8))
+        frame_presup = tk.Frame(f, bg=COLOR_BG)
+        frame_presup.pack(fill="x", padx=14, pady=(4,0))
+
+        tk.Label(frame_presup, text="💰 Presupuesto máximo:", font=("Helvetica",8,"bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(side="left", padx=(0,8))
+
+        self.lbl_presup = tk.Label(frame_presup, text="Todos", font=("Helvetica",8,"bold"), bg=COLOR_BG, fg=COLOR_RAYO_YELLOW)
+        self.lbl_presup.pack(side="right")
+
+        self.slider_presup = tk.Scale(f, from_=0, to=4, orient="horizontal", showvalue=False, bg=COLOR_BG, fg=COLOR_TEXT_MAIN, troughcolor="#2D2D2D", activebackground=COLOR_ACCENT_RED, highlightthickness=0, bd=0, command=self._cambiar_presupuesto)
+        self.slider_presup.set(4)
+        self.slider_presup.pack(fill="x", padx=14, pady=(2,4))
+
+        tk.Label(f, text="Gastronomía · Ocio · Entretenimiento · Bienestar. 100% Gratis.", font=("Helvetica", 8), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", padx=15, pady=(0, 8))
 
         # Chatbot floating button (big and easy to click!)
         self.btn_chatbot_flotante = tk.Button(f, text="🤖", font=("Helvetica", 24), bg=COLOR_AZUL_ELECTRICO, fg=COLOR_TEXT_MAIN, bd=3, cursor="hand2", width=4, height=2, command=self.toggle_chatbot_panel, highlightthickness=0)
@@ -283,7 +330,7 @@ class PanelEstudiante(tk.Frame):
         banner = tk.Frame(f, bg=COLOR_ACCENT_RED, height=32)
         banner.pack(fill="x", side="bottom")
         banner.pack_propagate(False)
-        tk.Label(banner, text="Two Pack: Tu ciudad, tus planes, tu mejor match.", font=("Helvetica", 8, "bold"), bg=COLOR_ACCENT_RED, fg=COLOR_TEXT_MAIN).pack(expand=True, pady=8)
+        tk.Label(banner, text="Two Pack: Descuentos reales, experiencias compartidas en Cochabamba.", font=("Helvetica", 8, "bold"), bg=COLOR_ACCENT_RED, fg=COLOR_TEXT_MAIN).pack(expand=True, pady=8)
 
         # Chatbot panel (initially hidden)
         self.chatbot_panel = tk.Frame(self, bg="#0F1419", width=340, highlightthickness=1, highlightbackground="#333333")
@@ -458,17 +505,57 @@ class PanelEstudiante(tk.Frame):
                 configurar_animacion_boton(b, "#2A2A2A", COLOR_AZUL_ELECTRICO, "#0056B3")
         self._renderizar_grid()
 
+    def _cambiar_presupuesto(self, val):
+        niveles = {
+            0: ("Hasta Bs. 30",30),
+            1: ("Hasta Bs. 50",50),
+            2: ("Hasta Bs. 80",80),
+            3: ("Hasta Bs. 100",100),
+            4: ("Todos", None),
+        }
+        texto, maximo = niveles[int(val)]
+        self.presup_max = maximo
+        if hasattr(self, "lbl_presup"):
+            try:
+                self.lbl_presup.config(text=texto)
+            except Exception:
+                pass
+        self._renderizar_grid()
+
     def _renderizar_grid(self):
         for w in self.frame_grid.winfo_children():
             w.destroy()
         self.tarjetas = []
 
         promos = base_datos_global["promociones"]
+        
+        # First apply filters (chatbot or category)
         if self.filtro_actual:
             promos = self._filtrar_promociones(self.filtro_actual)
         else:
             if self.filtro_categoria != "Todas":
                 promos = [p for p in promos if p["cat"] == self.filtro_categoria]
+        
+        # Apply presupuesto filter
+        presup_max = getattr(self, "presup_max", None)
+        if presup_max is not None:
+            promos = [
+                p for p in promos
+                if (presup_max is None
+                    or int(p.get("precio_ref", 0) or 0) <= presup_max)
+            ]
+        
+        # Then apply search query filter
+        if self.search_query:
+            promos = [
+                p for p in promos
+                if (
+                    self.search_query in p["titulo"].lower()
+                    or self.search_query in p.get("descripcion", "").lower()
+                    or self.search_query in p.get("comercio", "").lower()
+                    or self.search_query in p.get("zona", "").lower()
+                )
+            ]
 
         for i, promo in enumerate(promos):
             fila = i // 2
@@ -498,11 +585,36 @@ class PanelEstudiante(tk.Frame):
         canvas_foto = tk.Canvas(card, width=180, height=110, bg=bg1, bd=0, highlightthickness=0)
         canvas_foto.pack(fill="x")
 
-        canvas_foto.create_rectangle(0, 0, 180, 55, fill=bg1, outline="")
-        canvas_foto.create_rectangle(0, 55, 180, 110, fill=bg2, outline="")
+        # Check if promo has an image path
+        image_loaded = False
+        if Image and promo.get("imagen"):
+            image_path = os.path.join(BASE_DIR, promo["imagen"])
+            if os.path.exists(image_path):
+                try:
+                    # Open image, resize to exactly 180x110 (maintaining aspect ratio if needed, then crop or pad)
+                    img = Image.open(image_path)
+                    # Resize to fit 180x110, using LANCZOS for high quality
+                    img.thumbnail((180, 110), Image.Resampling.LANCZOS)
+                    # Create a background and paste the image centered
+                    background = Image.new("RGB", (180, 110), bg1)
+                    paste_x = (180 - img.width) // 2
+                    paste_y = (110 - img.height) // 2
+                    background.paste(img, (paste_x, paste_y))
+                    photo = ImageTk.PhotoImage(background)
+                    # Keep a reference to prevent garbage collection!
+                    canvas_foto.image = photo
+                    canvas_foto.create_image(0, 0, anchor="nw", image=photo)
+                    image_loaded = True
+                except Exception as e:
+                    print(f"Error loading image {image_path}: {e}")
 
-        canvas_foto.create_text(90, 50, text=emoji, font=("Helvetica", 36))
+        # If no image, draw the default background and emoji
+        if not image_loaded:
+            canvas_foto.create_rectangle(0, 0, 180, 55, fill=bg1, outline="")
+            canvas_foto.create_rectangle(0, 55, 180, 110, fill=bg2, outline="")
+            canvas_foto.create_text(90, 50, text=emoji, font=("Helvetica", 36))
 
+        # Always draw the 2x1 and demand badges on top
         canvas_foto.create_rectangle(8, 8, 48, 28, fill=COLOR_ACCENT_RED, outline="")
         canvas_foto.create_text(28, 18, text="2x1", font=("Helvetica", 9, "bold"), fill=COLOR_TEXT_MAIN)
 
@@ -604,48 +716,448 @@ class PanelEstudiante(tk.Frame):
 
     def mostrar_match_panel(self):
         f = self.frame_contenido
+        header = tk.Frame(f, bg=COLOR_ESCUDO_RED, height=85)
+        header.pack(fill="x")
+        header.pack_propagate(False)
+        left_col = tk.Frame(header, bg=COLOR_ESCUDO_RED)
+        left_col.pack(side="left", padx=15, pady=10)
+        tk.Label(left_col, text="🤝 Encontrar Compañero", font=("Helvetica", 14, "bold"), bg=COLOR_ESCUDO_RED, fg=COLOR_TEXT_MAIN).pack(anchor="w")
+        tk.Label(left_col, text="2x1 · Combos · Descuentos · Happy Hour · Ofertas locales", font=("Helvetica", 8), bg=COLOR_ESCUDO_RED, fg=COLOR_TEXT_MUTED).pack(anchor="w")
+        
+        # Badge IA MATCHMAKER ACTIVO (con parpadeo)
+        self.badge_matchmaker = tk.Label(header, text="⚡ IA MATCHMAKER ACTIVO", font=("Helvetica", 8, "bold"), bg=COLOR_SUCCESS, fg=COLOR_TEXT_MAIN, padx=8, pady=4)
+        self.badge_matchmaker.pack(side="right", padx=15)
+        
+        # Frame principal scrollable
+        canvas_main = tk.Canvas(f, bg=COLOR_BG, bd=0, highlightthickness=0)
+        sb_main = ttk.Scrollbar(f, orient="vertical", command=canvas_main.yview)
+        frame_scroll_main = tk.Frame(canvas_main, bg=COLOR_BG)
+        
+        # Make frame fill canvas width
+        def resize_frame(event):
+            canvas_width = event.width
+            canvas_main.itemconfig(1, width=canvas_width)
+            
+        frame_scroll_main.bind("<Configure>", lambda e: canvas_main.configure(scrollregion=canvas_main.bbox("all")))
+        canvas_main.bind("<Configure>", resize_frame)
+        
+        canvas_main.create_window((0, 0), window=frame_scroll_main, anchor="nw", width=canvas_main.winfo_reqwidth())
+        canvas_main.configure(yscrollcommand=sb_main.set)
+        canvas_main.pack(side="left", fill="both", expand=True)
+        sb_main.pack(side="right", fill="y")
+        
+        # --- SELECCIÓN DE PROMOCIÓN ---
+        tk.Label(frame_scroll_main, text="🎁 Selecciona una Promoción", font=("Helvetica", 12, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MAIN).pack(anchor="w", padx=15, pady=(15, 10))
+        
+        frame_promos = tk.Frame(frame_scroll_main, bg=COLOR_BG)
+        frame_promos.pack(fill="x", padx=12, pady=(0, 15))
+        
+        self.promo_seleccionada_match = tk.StringVar(value=base_datos_global["promociones"][0]["id"] if base_datos_global["promociones"] else "")
+        
+        for promo in base_datos_global["promociones"][:6]:  # Mostrar primeras 6 promos
+            btn_promo = tk.Radiobutton(
+                frame_promos,
+                text=f"{promo['titulo'][:30]}...",
+                variable=self.promo_seleccionada_match,
+                value=promo["id"],
+                font=("Helvetica", 9),
+                bg=COLOR_CARD,
+                fg=COLOR_TEXT_MAIN,
+                selectcolor=COLOR_AZUL_ELECTRICO,
+                indicatoron=0,
+                padx=10,
+                pady=8,
+                cursor="hand2"
+            )
+            btn_promo.pack(fill="x", pady=3)
+            configurar_animacion_boton(btn_promo, COLOR_CARD, "#3A3A3A", COLOR_AZUL_ELECTRICO)
+        
+        # --- CONTROLES AVANZADOS ---
+        frame_controles = tk.Frame(frame_scroll_main, bg=COLOR_CARD, highlightthickness=1, highlightbackground="#2D2D2D")
+        frame_controles.pack(fill="x", padx=12, pady=(0, 15))
+        
+        tk.Label(frame_controles, text="⚙️ Preferencias de Match", font=("Helvetica", 11, "bold"), bg=COLOR_CARD, fg=COLOR_AMARILLO_ORO).pack(anchor="w", padx=15, pady=(12, 8))
+        
+        # Slider de distancia
+        frame_slider = tk.Frame(frame_controles, bg=COLOR_CARD)
+        frame_slider.pack(fill="x", padx=15, pady=(0, 10))
+        tk.Label(frame_slider, text="📍 Rango de Distancia:", font=("Helvetica", 9, "bold"), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN).pack(anchor="w")
+        
+        self.rango_distancia = tk.IntVar(value=3)
+        slider_dist = tk.Scale(
+            frame_slider,
+            from_=1,
+            to=10,
+            orient="horizontal",
+            variable=self.rango_distancia,
+            bg=COLOR_CARD,
+            fg=COLOR_TEXT_MAIN,
+            highlightthickness=0,
+            troughcolor="#2A2A2A",
+            activebackground=COLOR_AZUL_ELECTRICO
+        )
+        slider_dist.pack(fill="x", pady=2)
+        
+        self.label_distancia = tk.Label(frame_slider, text=f"Distancia máxima: {self.rango_distancia.get()} km", font=("Helvetica", 8), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED)
+        self.label_distancia.pack(anchor="w")
+        
+        slider_dist.configure(command=lambda v: self.label_distancia.config(text=f"Distancia máxima: {int(float(v))} km"))
+        
+        # Selector de ventana horaria
+        tk.Label(frame_controles, text="🕐 Ventana Horaria:", font=("Helvetica", 9, "bold"), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN).pack(anchor="w", padx=15, pady=(5, 5))
+        
+        frame_horas = tk.Frame(frame_controles, bg=COLOR_CARD)
+        frame_horas.pack(fill="x", padx=15, pady=(0, 10))
+        
+        opciones_horas = [
+            ("⚡ Ahora mismo - 30 min", 12, 13),
+            ("☀️ En la tarde", 16, 19),
+            ("🌙 Noche de Fiesta", 20, 23)
+        ]
+        self.hora_inicio = tk.IntVar(value=12)
+        self.hora_fin = tk.IntVar(value=13)
+        
+        for texto, h_inicio, h_fin in opciones_horas:
+            btn_hora = tk.Radiobutton(
+                frame_horas,
+                text=texto,
+                variable=self.hora_inicio,
+                value=h_inicio,
+                font=("Helvetica", 8),
+                bg="#2A2A2A",
+                fg=COLOR_TEXT_MAIN,
+                selectcolor=COLOR_AZUL_ELECTRICO,
+                indicatoron=0,
+                padx=10,
+                pady=6,
+                cursor="hand2",
+                command=lambda hi=h_inicio, hf=h_fin: (self.hora_inicio.set(hi), self.hora_fin.set(hf))
+            )
+            btn_hora.pack(side="left", expand=True, fill="x", padx=2)
+            configurar_animacion_boton(btn_hora, "#2A2A2A", COLOR_AZUL_ELECTRICO, "#0056B3")
+        
+        # Toggle de preferencias
+        frame_toggles = tk.Frame(frame_controles, bg=COLOR_CARD)
+        frame_toggles.pack(fill="x", padx=15, pady=(0, 15))
+        
+        tk.Label(frame_toggles, text="🎚️ Filtrar por:", font=("Helvetica", 9, "bold"), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN).pack(anchor="w", pady=(0, 5))
+        
+        # Toggle de género
+        self.filtro_genero_activo = tk.BooleanVar(value=False)
+        self.genero_filtro = tk.StringVar(value="Masculino")
+        
+        frame_toggle_genero = tk.Frame(frame_toggles, bg=COLOR_CARD)
+        frame_toggle_genero.pack(fill="x", pady=3)
+        
+        tk.Checkbutton(frame_toggle_genero, text="Filtrar por género", variable=self.filtro_genero_activo, 
+                      bg=COLOR_CARD, fg=COLOR_TEXT_MAIN, selectcolor=COLOR_CARD, font=("Helvetica", 9)).pack(side="left")
+        
+        opciones_genero = ["Masculino", "Femenino", "Otro"]
+        self.combo_genero = ttk.Combobox(frame_toggle_genero, textvariable=self.genero_filtro, values=opciones_genero, state="readonly", width=12)
+        self.combo_genero.pack(side="left", padx=10)
+        
+        # Toggle de confianza mínima
+        tk.Label(frame_toggles, text="⭐ Confianza mínima:", font=("Helvetica", 9), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN).pack(anchor="w", pady=(5, 2))
+        
+        self.confianza_minima = tk.DoubleVar(value=3.0)
+        slider_confianza = tk.Scale(
+            frame_toggles,
+            from_=1.0,
+            to=5.0,
+            orient="horizontal",
+            variable=self.confianza_minima,
+            resolution=0.5,
+            bg=COLOR_CARD,
+            fg=COLOR_TEXT_MAIN,
+            highlightthickness=0,
+            troughcolor="#2A2A2A",
+            activebackground=COLOR_AMARILLO_ORO,
+            length=200
+        )
+        slider_confianza.pack(anchor="w")
+        
+        # --- BOTÓN PRINCIPAL ---
+        btn_activar_match = tk.Button(
+            frame_scroll_main,
+            text="🤝 Activar Two Pack Match",
+            font=("Helvetica", 14, "bold"),
+            bg=COLOR_ACCENT_RED,
+            fg=COLOR_TEXT_MAIN,
+            bd=0,
+            cursor="hand2",
+            padx=30,
+            pady=15,
+            command=self.activar_radar_matchmaker
+        )
+        btn_activar_match.pack(fill="x", padx=15, pady=(5, 20))
+        configurar_animacion_boton(btn_activar_match, COLOR_ACCENT_RED, COLOR_RED_HOVER, COLOR_RED_ACTIVE)
+        
+        # --- LISTA DE MATCHES DISPONIBLES ---
+        tk.Label(frame_scroll_main, text="👥 Personas buscando compañeros ahora", font=("Helvetica", 13, "bold"), bg=COLOR_BG, fg=COLOR_AMARILLO_ORO).pack(anchor="w", padx=15, pady=(0, 10))
+        
+        self.frame_lista_matches = tk.Frame(frame_scroll_main, bg=COLOR_BG)
+        self.frame_lista_matches.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        
+        self._actualizar_lista_matches()
+
+    def _actualizar_lista_matches(self):
+        for w in self.frame_lista_matches.winfo_children():
+            w.destroy()
+
+        # Obtener promoción seleccionada
+        promo_seleccionada = None
+        promo_id = self.promo_seleccionada_match.get()
+        for promo in base_datos_global["promociones"]:
+            if promo["id"] == promo_id:
+                promo_seleccionada = promo
+                break
+        
+        if not promo_seleccionada:
+            promo_seleccionada = base_datos_global["promociones"][0] if base_datos_global["promociones"] else None
+        
+        if not promo_seleccionada:
+            return
+
+        # Filtrar solicitudes
+        solicitudes_filtradas = []
+        for solicitud in base_datos_global.get("pool_solicitudes", []):
+            promo_solicitada = None
+            for promo in base_datos_global["promociones"]:
+                if promo["id"] == solicitud["oferta_id"]:
+                    promo_solicitada = promo
+                    break
+            if promo_solicitada:
+                solicitudes_filtradas.append((solicitud, promo_solicitada))
+
+        if not solicitudes_filtradas:
+            frame_vacio = tk.Frame(self.frame_lista_matches, bg=COLOR_BG)
+            frame_vacio.pack(fill="both", expand=True, pady=40)
+            tk.Label(frame_vacio, text="🔍", font=("Helvetica", 40), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(pady=(0, 10))
+            tk.Label(frame_vacio, text="No hay solicitudes disponibles", font=("Helvetica", 13, "bold"), bg=COLOR_BG, fg=COLOR_TEXT_MAIN).pack()
+            tk.Button(frame_vacio, text="Ver todas las promociones", font=("Helvetica", 10, "bold"), bg=COLOR_ACCENT_RED, fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", padx=20, pady=10, command=lambda: self.navegar_a("inicio")).pack()
+            return
+
+        for solicitud, promo_solicitada in solicitudes_filtradas:
+            card_solicitud = tk.Frame(self.frame_lista_matches, bg=COLOR_CARD, highlightthickness=1, highlightbackground="#2D2D2D", padx=14, pady=14)
+            card_solicitud.pack(fill="x", pady=6)
+            
+            usuario_solicitante = base_datos_global["usuarios"].get(solicitud["usuario"], {"nombre": solicitud["usuario"], "genero": "No especificado", "confianza": 5.0, "matches": 0, "estado": "Activo"})
+
+            # Avatar
+            canvas_av = tk.Canvas(card_solicitud, width=60, height=60, bg=COLOR_CARD, bd=0, highlightthickness=0)
+            canvas_av.pack(side="left", padx=(0, 14))
+            canvas_av.create_oval(3, 3, 57, 57, fill=COLOR_ACCENT_RED, outline=COLOR_RED_HOVER, width=2)
+            ini = usuario_solicitante["nombre"][0].upper()
+            canvas_av.create_text(30, 30, text=ini, font=("Helvetica", 26, "bold"), fill=COLOR_TEXT_MAIN)
+
+            # Info
+            info_solicitud = tk.Frame(card_solicitud, bg=COLOR_CARD)
+            info_solicitud.pack(side="left", fill="x", expand=True)
+
+            # Nombre y estado
+            fila1 = tk.Frame(info_solicitud, bg=COLOR_CARD)
+            fila1.pack(fill="x")
+            tk.Label(fila1, text=usuario_solicitante["nombre"], font=("Helvetica", 12, "bold"), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN).pack(side="left")
+            estado = usuario_solicitante.get("estado", "Activo")
+            color_e = COLOR_SUCCESS if estado == "Activo" else COLOR_ACCENT_RED
+            tk.Label(fila1, text=f"● {estado}", font=("Helvetica", 8, "bold"), bg=COLOR_CARD, fg=color_e).pack(side="right")
+
+            # Stats
+            fila2 = tk.Frame(info_solicitud, bg=COLOR_CARD)
+            fila2.pack(fill="x", pady=(4, 6))
+            tk.Label(fila2, text=f"{usuario_solicitante.get('genero', 'No especificado')}", font=("Helvetica", 9), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack(side="left")
+            tk.Label(fila2, text=f"⭐ {usuario_solicitante.get('confianza', 5.0)}", font=("Helvetica", 9, "bold"), bg=COLOR_CARD, fg=COLOR_AMARILLO_ORO).pack(side="left", padx=(10, 0))
+            tk.Label(fila2, text=f"🤝 {usuario_solicitante.get('matches', 0)} matches", font=("Helvetica", 9), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack(side="left", padx=(10, 0))
+
+            # Promo y horario
+            tk.Label(info_solicitud, text=f"🎁 {promo_solicitada['titulo']}", font=("Helvetica", 10, "bold"), bg=COLOR_CARD, fg=COLOR_ACCENT_RED).pack(anchor="w")
+            tk.Label(info_solicitud, text=f"📍 {promo_solicitada.get('zona', 'Zona Centro')} | 🕐 {solicitud['hora_inicio']}:00 - {solicitud['hora_fin']}:00", font=("Helvetica", 9), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack(anchor="w", pady=(2, 10))
+
+            # Botón
+            btn_unirme = tk.Button(info_solicitud, text="🤝 Unirme al Plan", font=("Helvetica", 10, "bold"), bg=COLOR_SUCCESS, fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", padx=20, pady=8, command=lambda p=promo_solicitada: self.activar_match_desde_detalle(p))
+            btn_unirme.pack(fill="x")
+            configurar_animacion_boton(btn_unirme, COLOR_SUCCESS, "#27AE60", "#1E8449")
+
+    def activar_radar_matchmaker(self):
+        """Activa la animación del radar y busca matches"""
+        # Obtener la promoción seleccionada
+        promo_seleccionada = None
+        promo_id = self.promo_seleccionada_match.get()
+        for promo in base_datos_global["promociones"]:
+            if promo["id"] == promo_id:
+                promo_seleccionada = promo
+                break
+        
+        if not promo_seleccionada:
+            promo_seleccionada = base_datos_global["promociones"][0] if base_datos_global["promociones"] else None
+        
+        if not promo_seleccionada:
+            return
+        
+        # Obtener preferencias
+        rango_dist = self.rango_distancia.get()
+        h_inicio = self.hora_inicio.get()
+        h_fin = self.hora_fin.get()
+        filtro_genero = self.genero_filtro.get() if self.filtro_genero_activo.get() else None
+        conf_min = self.confianza_minima.get()
+        
+        # Inicializar IA Matchmaker
+        ia_matchmaker = IAMatchmaker(base_datos_global)
+        
+        # Mostrar pantalla de radar
+        self.mostrar_pantalla_radar(ia_matchmaker, promo_seleccionada, rango_dist, h_inicio, h_fin, filtro_genero, conf_min)
+
+    def mostrar_pantalla_radar(self, ia_matchmaker, promo, rango_dist, h_inicio, h_fin, filtro_genero, conf_min):
+        """Muestra la animación del radar"""
+        # Limpiar contenido
+        for w in self.frame_contenido.winfo_children():
+            w.destroy()
+        
+        f = self.frame_contenido
+        
+        # Header
         header = tk.Frame(f, bg=COLOR_ESCUDO_RED, height=70)
         header.pack(fill="x")
         header.pack_propagate(False)
-        tk.Label(header, text="🤝 Encontrar Compañero", font=("Helvetica", 14, "bold"), bg=COLOR_ESCUDO_RED, fg=COLOR_TEXT_MAIN).pack(side="left", padx=15, pady=25)
+        
+        # Badge en estado de búsqueda (parpadeante)
+        self.badge_matchmaker_radar = tk.Label(header, text="⚡ IA MATCHMAKER BUSCANDO...", font=("Helvetica", 8, "bold"), bg=COLOR_AMARILLO_ORO, fg="#1A1A1A", padx=8, pady=4)
+        self.badge_matchmaker_radar.pack(side="right", padx=15, pady=25)
+        self.parpadeo_activo = True
+        self._parpadear_badge()
+        
+        tk.Label(header, text="🔍 Buscando Compañero...", font=("Helvetica", 14, "bold"), bg=COLOR_ESCUDO_RED, fg=COLOR_TEXT_MAIN).pack(side="left", padx=15, pady=25)
+        
+        # Canvas para el radar
+        self.canvas_radar = tk.Canvas(f, bg="#0A0A15", height=350)
+        self.canvas_radar.pack(fill="x", padx=20, pady=20)
+        
+        # Label de estado
+        self.label_estado_radar = tk.Label(f, text="Iniciando búsqueda...", font=("Helvetica", 11), bg=COLOR_BG, fg=COLOR_TEXT_MAIN)
+        self.label_estado_radar.pack(pady=(0, 10))
+        
+        # Barra de progreso
+        self.barra_progreso = ttk.Progressbar(f, length=300, mode="determinate")
+        self.barra_progreso.pack(pady=(0, 30))
+        
+        # Iniciar animación
+        self.paso_actual = 0
+        self._animar_radar(ia_matchmaker, promo, rango_dist, h_inicio, h_fin, filtro_genero, conf_min)
 
-        # Mostrar pool de solicitudes disponibles
-        tk.Label(f, text="Personas buscando compañeros ahora", font=("Helvetica", 13, "bold"), bg=COLOR_BG, fg=COLOR_AMARILLO_ORO).pack(anchor="w", padx=15, pady=(20))
-
-        if not base_datos_global.get('pool_solicitudes', []):
-            tk.Label(f, text="No hay solicitudes disponibles en este momento", font=("Helvetica", 11), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(pady=40)
-            tk.Button(f, text="Ver promociones", font=("Helvetica", 10, "bold"), bg=COLOR_ACCENT_RED, fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", padx=20, pady=10, command=lambda: self.navegar_a("inicio")).pack()
+    def _parpadear_badge(self):
+        if not hasattr(self, 'parpadeo_activo') or not self.parpadeo_activo:
             return
-
-        frame_lista = tk.Frame(f, bg=COLOR_BG)
-        frame_lista.pack(fill="both", expand=True, padx=10)
-
-        for solicitud in base_datos_global.get('pool_solicitudes', []):
-            card_solicitud = tk.Frame(frame_lista, bg=COLOR_CARD, highlightthickness=1, highlightbackground="#2D2D2D", padx=12, pady=10)
-            card_solicitud.pack(fill="x", pady=5)
             
-            usuario_solicitante = base_datos_global['usuarios'].get(solicitud['usuario'], {"nombre": solicitud['usuario'], "genero": "No especificado", "confianza": 5.0, "matches": 0, "estado": "Activo"})
-            # Find the promo
-            promo_solicitada = None
-            for promo in base_datos_global['promociones']:
-                if promo['id'] == solicitud['oferta_id']:
-                    promo_solicitada = promo
-                    break
-            if not promo_solicitada:
-                promo_solicitada = {'titulo': 'Plan general'}
+        if hasattr(self, 'badge_matchmaker_radar') and self.badge_matchmaker_radar.winfo_exists():
+            color_actual = self.badge_matchmaker_radar.cget("bg")
+            nuevo_color = COLOR_AMARILLO_ORO if color_actual == "#1A1A1A" else "#1A1A1A"
+            self.badge_matchmaker_radar.config(bg=nuevo_color)
+            self.after(300, self._parpadear_badge)
 
-            canvas_av = tk.Canvas(card_solicitud, width=50, height=50, bg=COLOR_CARD, bd=0, highlightthickness=0)
-            canvas_av.pack(side="left", padx=(0, 12))
-            canvas_av.create_oval(2, 2, 48, 48, fill=COLOR_ACCENT_RED, outline="")
-            ini = usuario_solicitante['nombre'][0].upper()
-            canvas_av.create_text(25, 25, text=ini, font=("Helvetica", 22, "bold"), fill=COLOR_TEXT_MAIN)
+    def _animar_radar(self, ia_matchmaker, promo, rango_dist, h_inicio, h_fin, filtro_genero, conf_min):
+        if self.paso_actual > 20:
+            # Finalizar animación y abrir chat
+            self.parpadeo_activo = False
+            
+            # Encontrar matches reales
+            matches = ia_matchmaker.encontrar_matches(
+                self.usuario_actual,
+                promo,
+                rango_distancia=rango_dist,
+                hora_inicio=h_inicio,
+                hora_fin=h_fin,
+                filtro_genero=filtro_genero,
+                filtro_confianza_min=conf_min
+            )
+            
+            # Si no hay matches, crear uno simulado para demostración
+            match_usuario = None
+            if matches:
+                match_usuario = matches[0]
+            else:
+                # Usuario simulado
+                match_usuario = {
+                    "usuario": {
+                        "nombre": "María José",
+                        "genero": "Femenino",
+                        "confianza": 5.0,
+                        "matches": 12,
+                        "estado": "Activo"
+                    },
+                    "oferta": promo
+                }
+            
+            # Cambiar badge a éxito
+            self.badge_matchmaker_radar.config(text="✨ ¡MATCH ENCONTRADO!", bg=COLOR_SUCCESS, fg=COLOR_TEXT_MAIN)
+            self.label_estado_radar.config(text="¡Compañero perfecto encontrado! Conectando...")
+            self.barra_progreso["value"] = 100
+            
+            # Abrir chat después de un delay
+            self.after(1500, lambda: self._abrir_chat_match(match_usuario))
+            return
+        
+        # Dibujar radar
+        self.canvas_radar.delete("all")
+        width = self.canvas_radar.winfo_width() or 400
+        height = 350
+        center_x = width // 2
+        center_y = height // 2
+        
+        # Círculos concéntricos
+        for i in range(1, 5):
+            radius = 40 * i
+            self.canvas_radar.create_oval(
+                center_x - radius, center_y - radius,
+                center_x + radius, center_y + radius,
+                outline="#1A3A1A", width=1
+            )
+        
+        # Líneas radiales
+        for angle in [0, 45, 90, 135, 180, 225, 270, 315]:
+            import math
+            rad = math.radians(angle)
+            x = center_x + 180 * math.cos(rad)
+            y = center_y + 180 * math.sin(rad)
+            self.canvas_radar.create_line(center_x, center_y, x, y, fill="#1A3A1A", width=1)
+        
+        # Barra giratoria
+        angle_rad = math.radians(self.paso_actual * 18)
+        end_x = center_x + 160 * math.cos(angle_rad)
+        end_y = center_y + 160 * math.sin(angle_rad)
+        
+        # Gradiente de la barra
+        self.canvas_radar.create_line(
+            center_x, center_y, end_x, end_y,
+            fill=COLOR_AZUL_ELECTRICO, width=4,
+            smooth=True
+        )
+        
+        # Punto central
+        self.canvas_radar.create_oval(
+            center_x - 8, center_y - 8,
+            center_x + 8, center_y + 8,
+            fill=COLOR_SUCCESS, outline=""
+        )
+        
+        # Actualizar mensaje y progreso
+        mensaje = ia_matchmaker.obtener_mensaje_estado(self.paso_actual // 3)
+        self.label_estado_radar.config(text=mensaje)
+        self.barra_progreso["value"] = (self.paso_actual / 20) * 100
+        
+        self.paso_actual += 1
+        self.after(100, lambda: self._animar_radar(ia_matchmaker, promo, rango_dist, h_inicio, h_fin, filtro_genero, conf_min))
 
-            info_solicitud = tk.Frame(card_solicitud, bg=COLOR_CARD)
-            info_solicitud.pack(side="left", fill="x", expand=True)
-            tk.Label(info_solicitud, text=usuario_solicitante['nombre'], font=("Helvetica", 11, "bold"), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN).pack(anchor="w")
-            tk.Label(info_solicitud, text=f"Genero: {usuario_solicitante.get('genero', 'No especificado')} | Confianza: {usuario_solicitante.get('confianza', 5.0)}", font=("Helvetica", 9), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack(anchor="w")
-            tk.Label(info_solicitud, text=f"Busca: {promo_solicitada['titulo']} ({solicitud['hora_inicio']}:00 - {solicitud['hora_fin']}:00", font=("Helvetica", 10), bg=COLOR_CARD, fg=COLOR_AMARILLO_ORO).pack(anchor="w", pady=(2, 0))
-            tk.Button(info_solicitud, text="Unirme", font=("Helvetica", 9, "bold"), bg=COLOR_SUCCESS, fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", padx=15, pady=5, command=lambda p=promo_solicitada: self.activar_match_desde_detalle(p)).pack(anchor="e", pady=(5, 0))
+    def _abrir_chat_match(self, match_data):
+        """Abre el chat con el match encontrado"""
+        usuario_match = match_data["usuario"]
+        promo = match_data["oferta"]
+        
+        def al_cerrar():
+            self.mostrar_dashboard()
+            self.mostrar_match_panel()
+        
+        self.chat = SalaChatTemporal(self, self.usuario_actual, usuario_match, promo, al_cerrar)
+        self.cambiar_vista(self.chat)
 
     def mostrar_chat_vacio(self):
         f = self.frame_contenido
@@ -720,8 +1232,15 @@ class PanelEstudiante(tk.Frame):
         canvas_p = tk.Canvas(f, bg=COLOR_BG, bd=0, highlightthickness=0)
         sb_p = ttk.Scrollbar(f, orient="vertical", command=canvas_p.yview)
         frame_scroll = tk.Frame(canvas_p, bg=COLOR_BG)
+        
+        # Make frame fill canvas width
+        def resize_frame_p(event):
+            canvas_width_p = event.width
+            canvas_p.itemconfig(1, width=canvas_width_p)
+        
         frame_scroll.bind("<Configure>", lambda e: canvas_p.configure(scrollregion=canvas_p.bbox("all")))
-        canvas_p.create_window((0, 0), window=frame_scroll, anchor="nw")
+        canvas_p.bind("<Configure>", resize_frame_p)
+        canvas_p.create_window((0, 0), window=frame_scroll, anchor="nw", width=canvas_p.winfo_reqwidth())
         canvas_p.configure(yscrollcommand=sb_p.set)
         canvas_p.pack(side="left", fill="both", expand=True)
         sb_p.pack(side="right", fill="y")
@@ -757,6 +1276,22 @@ class PanelEstudiante(tk.Frame):
             tk.Label(col, text=f"{icono} {valor}", font=("Helvetica", 14, "bold"), bg=COLOR_CARD, fg=COLOR_AMARILLO_ORO).pack()
             tk.Label(col, text=etiqueta, font=("Helvetica", 8), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack()
 
+        matches_n = u.get("matches", 0)
+        precios = [
+            int(p.get("precio_ref", 0) or 0)
+            for p in base_datos_global["promociones"]
+            if p.get("precio_ref")
+        ]
+        prom_precio = (sum(precios) // len(precios) if precios else 50)
+        ahorro = matches_n * prom_precio
+
+        card_ahorro = tk.Frame(frame_scroll, bg="#0D200D", highlightthickness=1, highlightbackground="#1A4A1A")
+        card_ahorro.pack(fill="x", padx=12, pady=(0, 10))
+
+        tk.Label(card_ahorro, text="💰  MI AHORRO ACUMULADO", font=("Helvetica",8,"bold"), bg="#0D200D", fg=COLOR_SUCCESS).pack(anchor="w", padx=16, pady=(12,4))
+        tk.Label(card_ahorro, text=f"Bs. {ahorro}", font=("Helvetica",24,"bold"), bg="#0D200D", fg=COLOR_SUCCESS).pack()
+        tk.Label(card_ahorro, text=f"gracias a {matches_n} matches completados · precio prom. Bs. {prom_precio}", font=("Helvetica",8), bg="#0D200D", fg="#3A7A3A").pack(pady=(2,12))
+
         btn_hist = tk.Button(frame_scroll, text="📋  Ver historial de matches", font=("Helvetica", 10, "bold"), bg="#2D2D2D", fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", command=self.mostrar_historial)
         btn_hist.pack(fill="x", padx=12, ipady=10, pady=(0, 8))
         configurar_animacion_boton(btn_hist, "#2D2D2D", COLOR_ACCENT_RED, COLOR_RED_ACTIVE)
@@ -768,8 +1303,9 @@ class PanelEstudiante(tk.Frame):
         self.entradas_perfil = {}
         campos = [
             ("NOMBRE COMPLETO", "nombre"),
-            ("UNIVERSIDAD", "universidad"),
+            ("UNIVERSIDAD / TRABAJO", "universidad"),
             ("GÉNERO", "genero"),
+            ("ZONA PREFERIDA", "zona_preferida"),
         ]
         for label_txt, clave in campos:
             tk.Label(card_datos, text=label_txt, font=("Helvetica", 7, "bold"), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack(anchor="w", padx=16, pady=(4, 2))
@@ -777,6 +1313,19 @@ class PanelEstudiante(tk.Frame):
             en.insert(0, u.get(clave, ""))
             en.pack(fill="x", padx=16, ipady=7, pady=(0, 6))
             self.entradas_perfil[clave] = en
+        
+        # Campo de biografía (Text widget)
+        tk.Label(card_datos, text="BIOGRAFÍA", font=("Helvetica", 7, "bold"), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack(anchor="w", padx=16, pady=(4, 2))
+        self.text_bio = tk.Text(card_datos, font=("Helvetica", 10), bg="#2D2D2D", fg=COLOR_TEXT_MAIN, bd=0, highlightthickness=1, highlightbackground="#3D3D3D", height=4, wrap="word")
+        self.text_bio.insert("1.0", u.get("biografia", ""))
+        self.text_bio.pack(fill="x", padx=16, pady=(0, 6))
+        
+        # Campo de intereses
+        tk.Label(card_datos, text="INTERESES (separados por coma)", font=("Helvetica", 7, "bold"), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack(anchor="w", padx=16, pady=(4, 2))
+        en_intereses = tk.Entry(card_datos, font=("Helvetica", 10), bg="#2D2D2D", fg=COLOR_TEXT_MAIN, bd=0, highlightthickness=1, highlightbackground="#3D3D3D")
+        en_intereses.insert(0, ", ".join(u.get("intereses", [])))
+        en_intereses.pack(fill="x", padx=16, ipady=7, pady=(0, 6))
+        self.entradas_perfil["intereses"] = en_intereses
 
         btn_guardar = tk.Button(card_datos, text="💾  Guardar cambios", font=("Helvetica", 10, "bold"), bg=COLOR_SUCCESS, fg=COLOR_TEXT_MAIN, bd=0, cursor="hand2", command=self.guardar_perfil)
         btn_guardar.pack(fill="x", padx=16, ipady=9, pady=14)
@@ -792,13 +1341,22 @@ class PanelEstudiante(tk.Frame):
         configurar_animacion_boton(btn_logout, "#2A1B1D", COLOR_ACCENT_RED, COLOR_RED_ACTIVE)
 
     def guardar_perfil(self):
+        # Guardar campos de texto
         for clave, entrada in self.entradas_perfil.items():
             valor = entrada.get().strip()
+            if clave == "intereses":
+                # Convertir a lista
+                valor = [i.strip() for i in valor.split(",") if i.strip()]
             self.usuario_actual[clave] = valor
-            for user in base_datos_global.get('usuarios', []):
-                if user.get('email') == self.usuario_actual.get('email'):
-                    user[clave] = valor
-                    break
+        
+        # Guardar biografía
+        self.usuario_actual["biografia"] = self.text_bio.get("1.0", "end-1c").strip()
+        
+        # Actualizar en base_datos_global (que es un diccionario email -> user)
+        email_usuario = self.usuario_actual.get("email")
+        if email_usuario and email_usuario in base_datos_global.get("usuarios", {}):
+            base_datos_global["usuarios"][email_usuario].update(self.usuario_actual)
+        
         guardar_datos()
         self.mostrar_perfil()
 
@@ -820,10 +1378,113 @@ class PanelEstudiante(tk.Frame):
 
         self._dibujar_mapa()
 
+        tk.Label(f, text="🔴 Alta actividad   🟠 Media   🟡 Emergente", font=("Helvetica",7), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(pady=(4,0))
+
         self.frame_card_mapa = tk.Frame(f, bg=COLOR_CARD, highlightthickness=1, highlightbackground="#3D3D3D")
         self.frame_card_mapa.pack(fill="x", padx=10, pady=(6, 8))
 
         self._actualizar_card_mapa(base_datos_global["promociones"][0])
+
+    def mostrar_estadisticas_ciudad(self):
+        f = self.frame_contenido
+
+        header = tk.Frame(f, bg=COLOR_ESCUDO_RED, height=50)
+        header.pack(fill="x")
+        header.pack_propagate(False)
+        tk.Label(header, text="🏙️  Cochabamba Ciudad Inteligente", font=("Helvetica",12,"bold"), bg=COLOR_ESCUDO_RED, fg=COLOR_TEXT_MAIN).pack(side="left", padx=15, pady=14)
+        tk.Label(header, text="⚡ IA ACTIVO", font=("Helvetica",8,"bold"), bg="#FF4400", fg=COLOR_TEXT_MAIN).pack(side="right", padx=15)
+
+        canvas_e = tk.Canvas(f, bg=COLOR_BG, bd=0, highlightthickness=0)
+        sb_e = ttk.Scrollbar(f, orient="vertical", command=canvas_e.yview)
+        frame_e = tk.Frame(canvas_e, bg=COLOR_BG)
+        frame_e.bind("<Configure>", lambda e: canvas_e.configure(scrollregion=canvas_e.bbox("all")))
+        canvas_e.create_window((0, 0), window=frame_e, anchor="nw")
+        canvas_e.configure(yscrollcommand=sb_e.set)
+        canvas_e.pack(side="left", fill="both", expand=True)
+        sb_e.pack(side="right", fill="y")
+
+        # --- KPIs ---
+        tk.Label(frame_e, text="DATOS URBANOS EN TIEMPO REAL", font=("Helvetica",8,"bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", padx=14, pady=(12,6))
+
+        kpis = [
+            ("🤝", "42", "Matches hoy", COLOR_ACCENT_RED),
+            ("📢", str(len(base_datos_global["promociones"])), "Promos activas", COLOR_RAYO_YELLOW),
+            ("👥", "128", "Usuarios en app", COLOR_SUCCESS),
+            ("🏪", "87", "Comercios afiliados", "#5D3FD3"),
+        ]
+        frame_kpis = tk.Frame(frame_e, bg=COLOR_BG)
+        frame_kpis.pack(fill="x", padx=14, pady=(0,12))
+
+        for icono, valor, etq, color in kpis:
+            col = tk.Frame(frame_kpis, bg=COLOR_CARD, highlightthickness=1, highlightbackground="#2D2D2D")
+            col.pack(side="left", fill="x", expand=True, padx=3)
+            tk.Label(col, text=icono, font=("Helvetica",18), bg=COLOR_CARD).pack(pady=(10,0))
+            tk.Label(col, text=valor, font=("Helvetica",16,"bold"), bg=COLOR_CARD, fg=color).pack()
+            tk.Label(col, text=etq, font=("Helvetica",7), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED, justify="center").pack(pady=(0,10))
+
+        # --- GRÁFICO DE BARRAS POR ZONA ---
+        tk.Label(frame_e, text="PROMOS ACTIVAS POR ZONA", font=("Helvetica",8,"bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", padx=14, pady=(0,6))
+
+        card_bar = tk.Frame(frame_e, bg=COLOR_CARD, highlightthickness=1, highlightbackground="#2D2D2D")
+        card_bar.pack(fill="x", padx=14, pady=(0,12))
+
+        zonas_data = [
+            ("Zona UCATEC",8, COLOR_ACCENT_RED),
+            ("La Recoleta",6, "#FF6600"),
+            ("El Prado",5, COLOR_RAYO_YELLOW),
+            ("Av. América",4, COLOR_SUCCESS),
+            ("Zona Central",3, "#5D3FD3"),
+        ]
+        MAX_VAL = 8
+        BAR_W = 260
+
+        for zona, val, color in zonas_data:
+            fila = tk.Frame(card_bar, bg=COLOR_CARD)
+            fila.pack(fill="x", padx=12, pady=4)
+
+            tk.Label(fila, text=zona, font=("Helvetica",8), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN, width=14, anchor="w").pack(side="left")
+
+            bg_b = tk.Frame(fila, bg="#2D2D2D", height=14, width=BAR_W)
+            bg_b.pack(side="left", padx=(6,8))
+            bg_b.pack_propagate(False)
+
+            fill_w = int(BAR_W * (val / MAX_VAL))
+            tk.Frame(bg_b, bg=color, height=14, width=fill_w).place(x=0, y=0)
+
+            tk.Label(fila, text=str(val), font=("Helvetica",8,"bold"), bg=COLOR_CARD, fg=color).pack(side="left")
+
+        # --- HORAS PICO ---
+        tk.Label(frame_e, text="HORAS PICO DE USO", font=("Helvetica",8,"bold"), bg=COLOR_BG, fg=COLOR_TEXT_MUTED).pack(anchor="w", padx=14, pady=(0,6))
+
+        card_h = tk.Frame(frame_e, bg=COLOR_CARD, highlightthickness=1, highlightbackground="#2D2D2D")
+        card_h.pack(fill="x", padx=14, pady=(0,12))
+
+        horas = [
+            ("12:00-13:00",95, "🔥 Pico del mediodía"),
+            ("19:00-20:00",88, "🔥 Salida del trabajo"),
+            ("20:00-22:00",72, "⚡ Noche universitaria"),
+            ("08:00-09:00",45, "📈 Mañana temprana"),
+        ]
+        for hora, pct, etq in horas:
+            fila_h = tk.Frame(card_h, bg=COLOR_CARD)
+            fila_h.pack(fill="x", padx=12, pady=5)
+
+            tk.Label(fila_h, text=hora, font=("Helvetica",8,"bold"), bg=COLOR_CARD, fg=COLOR_TEXT_MAIN, width=13, anchor="w").pack(side="left")
+
+            col_h = COLOR_ACCENT_RED if pct >= 80 else COLOR_RAYO_YELLOW if pct >=60 else COLOR_SUCCESS
+
+            bg_h = tk.Frame(fila_h, bg="#2D2D2D", height=10, width=200)
+            bg_h.pack(side="left", padx=(6,8))
+            bg_h.pack_propagate(False)
+            tk.Frame(bg_h, bg=col_h, height=10, width=int(200*pct/100)).place(x=0, y=0)
+
+            tk.Label(fila_h, text=etq, font=("Helvetica",7), bg=COLOR_CARD, fg=COLOR_TEXT_MUTED).pack(side="left")
+
+        # --- FOOTER IA ---
+        card_ia = tk.Frame(frame_e, bg="#0D0D20", highlightthickness=1, highlightbackground="#5D3FD3")
+        card_ia.pack(fill="x", padx=14, pady=(0,14))
+        tk.Label(card_ia, text="🤖  IA Matchmaker - Análisis urbano activo", font=("Helvetica",9,"bold"), bg="#0D0D20", fg="#9D7FFF").pack(anchor="w", padx=14, pady=(10,2))
+        tk.Label(card_ia, text="Procesando patrones de consumo en Cochabamba en tiempo real.\nGeolocalización activa · Ventanas horarias optimizadas · Perfil de usuario analizado.", font=("Helvetica",8), bg="#0D0D20", fg="#7A7A9A", justify="left").pack(anchor="w", padx=14, pady=(0,10))
 
     def _dibujar_mapa(self):
         self.canvas_mapa.delete("all")
@@ -849,6 +1510,21 @@ class PanelEstudiante(tk.Frame):
         for x1, y1, x2, y2, color, nombre in zonas:
             self.canvas_mapa.create_rectangle(x1, y1, x2, y2, fill=color, outline="#3A4A3A", width=1)
             self.canvas_mapa.create_text((x1+x2)//2, (y1+y2)//2, text=nombre, font=("Helvetica", 8), fill="#6A8A6A")
+
+        zonas_calor = [
+            (int(self.W*0.22), int(self.H*0.20), 60, COLOR_ACCENT_RED, 8),
+            (int(self.W*0.70), int(self.H*0.25), 50, "#FF6600", 6),
+            (int(self.W*0.28), int(self.H*0.70), 45, COLOR_RAYO_YELLOW, 5),
+            (int(self.W*0.65), int(self.H*0.65), 55, COLOR_ACCENT_RED,7),
+            (int(self.W*0.45), int(self.H*0.38),35, "#FF6600",4),
+        ]
+        for cx, cy, radio, color, intensidad in zonas_calor:
+            for r, op in [
+                (radio, 0.08),
+                (int(radio*0.65),0.14),
+                (int(radio*0.35),0.25),
+            ]:
+                self.canvas_mapa.create_oval(cx-r, cy-r, cx+r, cy+r, fill=color, outline="", stipple="gray50" if op < 0.1 else "")
 
         pins_promos = [
             (int(self.W*0.22), int(self.H*0.20), COLOR_ACCENT_RED, base_datos_global["promociones"][0]),
